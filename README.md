@@ -185,6 +185,10 @@ pnpm package:release   # 生成可移植 marketplace
 
 近期方向是平台兼容、局部源码定位与修改 Diff 预览。历史撤回、备份迁移和导出仍在规划中，详见 [路线图](docs/ROADMAP.md)。如果这个项目对你有用，欢迎 Star 或分享你的画布。
 
+## 友情链接
+
+- [LINUX DO - 新的理想型社区](https://linux.do/)
+
 ## 许可证与致谢
 
 [MIT License](LICENSE)。感谢 `cursor-canvas-web`、React、Mantine、Recharts 和 MCP Apps 等开源项目，第三方声明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
