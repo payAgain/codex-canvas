@@ -42,7 +42,7 @@ for (const file of ['mcp.json', '.mcp.json']) {
   }
   await writeFile(path.join(stage, file), JSON.stringify(config, null, 2));
 }
-await writeFile(path.join(stage, 'canvas-config.json'), JSON.stringify(local ? { dataDirectory: path.join(root, '.canvas-data') } : { storage: 'user' }, null, 2));
+await writeFile(path.join(stage, 'canvas-config.json'), JSON.stringify(local ? { dataDirectory: path.join(root, '.canvas-data') } : { storage: 'plugin' }, null, 2));
 const manifest = JSON.parse(await readFile(path.join(stage, 'plugin.json'), 'utf8'));
 manifest.extensions = { 'com.openai': { interface: { displayName: 'Codex Canvas', shortDescription: '本地 React 画布、报告与持续编辑' } } };
 await writeFile(path.join(stage, 'plugin.json'), JSON.stringify(manifest, null, 2));

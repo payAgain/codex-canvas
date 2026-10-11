@@ -1,5 +1,6 @@
 import { HostBridge } from '../../../host-bridge/src/index.js';
-import type { CanvasDocument, CanvasState, Manifest, PublishResult, Json, PartSelection, CanvasFeedback } from '../../../runtime/src/contracts.js';
+import type { CanvasDocument, CanvasState, Manifest, PublishResult, Json, PartSelection, CanvasFeedback, CanvasLibrary, CanvasPreferences, ThemePreference } from '../../../runtime/src/contracts.js';
+import { canvasThemes, resolveTheme } from '../../../renderer/src/themes.js';
 import './shell.css';
 declare const __CANVAS_DESIGN_SCRIPT__: string;
 
@@ -9,7 +10,19 @@ const bridge = new HostBridge();
 const embedded = !(location.protocol === 'http:' && location.hostname === '127.0.0.1' && location.pathname === '/');
 document.documentElement.dataset.mode = embedded ? 'embedded' : 'browser';
 document.querySelector('.sidebar')!.id = 'canvas-library';
-const applyTheme = () => { document.documentElement.dataset.theme = bridge.theme; };
+let themePreference: ThemePreference = 'system', themeSaving = false;
+let library: CanvasLibrary | undefined, fileShowDeleted = false;
+const applyTheme = () => {
+  const theme = resolveTheme(themePreference, bridge.theme), root = document.documentElement;
+  const changed = root.dataset.palette !== theme.id;
+  root.dataset.theme = theme.kind; root.dataset.palette = theme.id;
+  for (const [key, value] of Object.entries({ bg: theme.bg, chrome: theme.chrome, sidebar: theme.sidebar, fg: theme.fg,
+    muted: theme.muted, quiet: theme.quiet, line: theme.line, fill: theme.fill, accent: theme.accent, 'on-accent': theme.onAccent,
+    'notice-bg': theme.noticeBg, 'notice-fg': theme.noticeFg })) root.style.setProperty(`--${key}`, value);
+  $('theme-toggle').textContent = `主题：${themePreference === 'system' ? '跟随宿主' : theme.label}`;
+  renderThemeOptions();
+  return changed;
+};
 let current: CanvasDocument | undefined;
 let editorBase: { canvasId: string; revision: number } | undefined;
 let manifests: Manifest[] = [];
@@ -96,16 +109,23 @@ function renderList() {
   if (!$('canvases').childElementCount) { const empty = document.createElement('p'); empty.className = 'library-empty'; empty.textContent = showDeleted ? '没有已删除的画布' : '还没有画布'; $('canvases').append(empty); }
 }
 async function refreshList() {
-  const result = await bridge.call<{ canvases: Manifest[]; deleted?: Manifest[]; fileErrors?: Record<string, string> }>('list');
+  const result = await bridge.call<CanvasLibrary & { fileErrors?: Record<string, string> }>('list');
+  library = result;
+  if (!themeSaving && result.preferences && themePreference !== result.preferences.theme) {
+    themePreference = result.preferences.theme;
+    if (applyTheme() && current) { await stateQueue; clearSelection(); renderFrame(current); }
+  }
   const next = result.canvases;
   if (current && result.fileErrors?.[current.manifest.canvasId]) note(`文件更新暂停：${result.fileErrors[current.manifest.canvasId]}。当前保留最近成功视图。`);
   if (JSON.stringify(next) !== JSON.stringify(manifests) || JSON.stringify(result.deleted ?? []) !== JSON.stringify(deleted)) { manifests = next; deleted = result.deleted ?? []; renderList(); }
   if (current && !manifests.some(m => m.canvasId === current!.manifest.canvasId)) { resetCanvas(); note('此画布已在其他面板删除，可从已删除列表恢复。'); }
+  updateHeader();
+  if (!$('file-panel').hidden) renderFileLibrary();
 }
 function updateHeader() {
   const m = current?.manifest;
   $('current-title').textContent = m?.title ?? '开始探索';
-  $('revision').textContent = m ? `源码 r${m.sourceRevision} / 已发布 ${m.publishedRevision ? `r${m.publishedRevision}` : '无'} · ${m.sourceFile ? `${m.sourceFile.watch ? '跟随文件' : '文件快照'} · ${m.sourceFile.path}` : m.canvasId.slice(0, 8)}` : '可保存、可交互的 React 画布';
+  $('revision').textContent = m ? `源码 r${m.sourceRevision} / 已发布 ${m.publishedRevision ? `r${m.publishedRevision}` : '无'}\n画布源码：${current!.sourcePath}${m.sourceFile ? `\n${m.sourceFile.watch ? '跟随文件' : '文件快照'}：${m.sourceFile.path}` : ''}` : `默认画布目录：${library?.canvasDirectory ?? '正在读取…'}`;
   ($('copy') as HTMLButtonElement).disabled = !m; ($('edit') as HTMLButtonElement).disabled = !m;
   $<HTMLButtonElement>('design-toggle').disabled = !m?.publishedRevision;
   $('welcome').hidden = Boolean(m); $('stage').hidden = !m;
@@ -127,6 +147,7 @@ async function loadCanvas(id: string, force = false) {
     if (data.bundle && (force || active?.revision !== data.manifest.publishedRevision || active.canvasId !== id)) renderFrame(data);
     else if (!data.bundle) { $('stage').textContent = '此画布尚无成功构建。请打开源码面板修复诊断。'; }
     if (data.manifest.diagnostics.length) note(`r${data.manifest.sourceRevision} 编译失败，当前保留 r${data.manifest.publishedRevision ?? '无'}。打开「编辑源码」查看诊断。`);
+    else if (data.rendererDiagnostics?.length) note('此画布的主题适配未能编译，已保留原有视图。打开源码可查看并修复。');
     if (!$('editor').hidden) showDiagnostics(data);
   } finally { if (epoch === loadEpoch) loading = false; }
 }
@@ -139,7 +160,8 @@ function renderFrame(data: CanvasDocument) {
   const frame: Frame = { element: document.createElement('iframe'), channel: crypto.randomUUID(), canvasId: data.manifest.canvasId, revision: data.manifest.publishedRevision!, failed: false };
   pending = frame; frame.element.className = 'candidate'; frame.element.title = `${data.manifest.title} · r${frame.revision}`;
   frame.element.setAttribute('sandbox', 'allow-scripts'); frame.element.referrerPolicy = 'no-referrer';
-  const boot = JSON.stringify({ channel: frame.channel, values: data.state.values, theme: bridge.theme }).replaceAll('<', '\\u003c');
+  const theme = resolveTheme(themePreference, bridge.theme);
+  const boot = JSON.stringify({ channel: frame.channel, values: data.state.values, theme: theme.kind, themeId: theme.id }).replaceAll('<', '\\u003c');
   frame.element.srcdoc = `<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'unsafe-inline'; img-src data:; font-src data:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none';"><style>${(data.css ?? '').replace(/<\/style/gi, '')}</style></head><body><div id="root"></div><script nonce="${nonce}">window.__CANVAS_BOOT__=${boot};window.addEventListener('error',e=>parent.postMessage({type:'render-error',channel:window.__CANVAS_BOOT__.channel,message:e.message},'*'));</script><script nonce="${nonce}">${safeScript(__CANVAS_DESIGN_SCRIPT__)}</script><script nonce="${nonce}">${safeScript(data.bundle!)}</script></body></html>`;
   $('stage').append(frame.element);
   frame.timer = setTimeout(() => { if (pending === frame) { frame.failed = true; frame.element.remove(); pending = undefined; note('新视图在 10 秒内未完成渲染。上一次可用视图已保留；请检查源码中的运行错误。'); } }, 10000);
@@ -187,7 +209,7 @@ function showDiagnostics(data: CanvasDocument) {
   $('diagnostics').textContent = data.manifest.diagnostics.map(d => `${d.file}${d.line ? `:${d.line}:${d.column}` : ''} [${d.phase}] ${d.message}`).join('\n');
 }
 function openEditor(fresh = false) {
-  $('editor').hidden = false; $('probe').hidden = true; $('file-panel').hidden = true;
+  $('editor').hidden = false; $('probe').hidden = true; $('file-panel').hidden = true; closeThemePanel();
   editorBase = !fresh && current ? { canvasId: current.manifest.canvasId, revision: current.manifest.sourceRevision } : undefined;
   $<HTMLInputElement>('title-input').value = !fresh && current ? current.manifest.title : '我的新画布';
   $<HTMLTextAreaElement>('source-input').value = !fresh && current ? current.source : `import { Page, Section, Text, useCanvasState, Button } from '@codex-canvas/sdk';\n\nexport default function Canvas() {\n  const [count, setCount] = useCanvasState('count', 0);\n  return <Page title="我的画布" subtitle="点击按钮，再刷新查看状态恢复。">\n    <Section title="开始探索">\n      <Text>已点击 {count} 次</Text>\n      <Button onClick={() => setCount(n => n + 1)}>增加一次</Button>\n    </Section>\n  </Page>;\n}\n`;
@@ -209,6 +231,71 @@ function showProbe() {
   ($('context-send') as HTMLButtonElement).disabled = !bridge.canAttach;
   ($('feedback-send') as HTMLButtonElement).disabled = !bridge.canSend;
 }
+function closeThemePanel() { $('theme-panel').hidden = true; $('theme-toggle').setAttribute('aria-expanded', 'false'); }
+function renderThemeOptions() {
+  const host = resolveTheme('system', bridge.theme);
+  const choices = [{ ...host, id: 'system' as const, label: '跟随宿主', description: '自动匹配 Codex 或系统的明暗模式' }, ...canvasThemes];
+  $('theme-options').replaceChildren();
+  for (const choice of choices) {
+    const button = document.createElement('button'); button.className = 'theme-choice';
+    button.setAttribute('aria-pressed', String(themePreference === choice.id)); button.disabled = themeSaving || !bridge.session;
+    const preview = document.createElement('span'); preview.className = 'theme-preview'; preview.setAttribute('aria-hidden', 'true');
+    preview.style.background = choice.bg; preview.style.borderColor = choice.line;
+    for (const color of [choice.sidebar, choice.fg, choice.accent]) { const swatch = document.createElement('i'); swatch.style.background = color; preview.append(swatch); }
+    const title = document.createElement('strong'); title.textContent = choice.label;
+    const description = document.createElement('small'); description.textContent = choice.description;
+    button.append(preview, title, description);
+    button.onclick = guarded(async () => {
+      if (themeSaving) return;
+      themeSaving = true; themePreference = choice.id;
+      const changed = applyTheme(); $('theme-status').textContent = '正在保存主题…';
+      try {
+        await stateQueue;
+        if (changed && current) { clearSelection(); renderFrame(current); }
+        await bridge.call<CanvasPreferences>('setTheme', { theme: choice.id });
+        $('theme-status').textContent = '主题已保存，下次打开继续使用。';
+      } catch (e) { $('theme-status').textContent = '主题已切换，但未能保存。请重新选择以重试。'; throw e; }
+      finally { themeSaving = false; renderThemeOptions(); }
+    });
+    $('theme-options').append(button);
+  }
+}
+function renderFileLibrary() {
+  $<HTMLInputElement>('library-directory').value = library?.canvasDirectory ?? '正在读取…';
+  $('file-saved').textContent = `已保存 (${manifests.length})`; $('file-deleted').textContent = `已删除 (${deleted.length})`;
+  $('file-saved').setAttribute('aria-pressed', String(!fileShowDeleted)); $('file-deleted').setAttribute('aria-pressed', String(fileShowDeleted));
+  const list = $('file-library-list'); list.replaceChildren();
+  for (const m of fileShowDeleted ? deleted : manifests) {
+    const row = document.createElement('div'); row.className = 'file-entry-row';
+    const entry = document.createElement('button'); entry.className = 'file-entry'; entry.disabled = fileShowDeleted;
+    const title = document.createElement('strong'); title.textContent = m.title;
+    const sourcePath = library?.sourcePaths[m.canvasId] ?? '';
+    const detail = document.createElement('small'); detail.textContent = `r${m.sourceRevision} · ${m.deletedAt ? '已删除，源码保留' : m.diagnostics.length ? '待修复' : '已发布'}\n${sourcePath}`;
+    entry.append(title, detail);
+    entry.onclick = guarded(async () => { if (!busy) { await loadCanvas(m.canvasId); $('file-panel').hidden = true; } });
+    const actions = document.createElement('div'); actions.className = 'actions';
+    const copyPath = document.createElement('button'); copyPath.className = 'quiet'; copyPath.textContent = '复制源码路径';
+    copyPath.onclick = guarded(() => copy(sourcePath)); actions.append(copyPath);
+    if (fileShowDeleted) {
+      const restore = document.createElement('button'); restore.className = 'outline'; restore.textContent = '恢复并打开';
+      restore.setAttribute('aria-label', `恢复并打开 ${m.title}`);
+      restore.onclick = guarded(async () => {
+        if (busy) return; busy = true; restore.disabled = true;
+        try {
+          await stateQueue; await bridge.call('restore', { canvasId: m.canvasId, baseRevision: m.sourceRevision });
+          await refreshList(); await loadCanvas(m.canvasId); $('file-panel').hidden = true; note('画布已恢复，源码与交互状态已保留。');
+        } finally { busy = false; restore.disabled = false; }
+      });
+      actions.append(restore);
+    }
+    row.append(entry, actions); list.append(row);
+  }
+  if (!list.childElementCount) {
+    const empty = document.createElement('p'); empty.className = 'library-empty';
+    empty.textContent = fileShowDeleted ? '没有已删除的画布。' : deleted.length ? '暂无画布，切换到「已删除」即可恢复。' : '这个目录还没有画布。可以新建画布，或打开其他文件。';
+    list.append(empty);
+  }
+}
 $('trash-toggle').onclick = () => { showDeleted = !showDeleted; renderList(); };
 $('design-toggle').onclick = () => setDesign(!designEnabled);
 $('selection-clear').onclick = clearSelection;
@@ -224,11 +311,25 @@ $('native-panel').onclick = guarded(() => bridge.openPanel());
 $('new').onclick = () => openEditor(true);
 function closeLibrary() { document.documentElement.classList.remove('library-open'); $('library-toggle').setAttribute('aria-expanded', 'false'); }
 $('library-toggle').onclick = () => { const open = document.documentElement.classList.toggle('library-open'); $('library-toggle').setAttribute('aria-expanded', String(open)); };
-const showFilePanel = () => { $('file-panel').hidden = false; $('editor').hidden = true; $('probe').hidden = true; };
+const showFilePanel = guarded(async () => {
+  $('file-panel').hidden = false; $('editor').hidden = true; $('probe').hidden = true; closeThemePanel(); closeLibrary();
+  await refreshList(); fileShowDeleted = !manifests.length && deleted.length > 0; renderFileLibrary();
+  if (current?.manifest.sourceFile) $<HTMLInputElement>('file-path').value = current.manifest.sourceFile.path;
+});
 $('open-file').onclick = showFilePanel;
 $('open-inline').onclick = showFilePanel;
 $('welcome-open').onclick = showFilePanel;
 $('file-close').onclick = () => { $('file-panel').hidden = true; };
+$('file-saved').onclick = () => { fileShowDeleted = false; renderFileLibrary(); };
+$('file-deleted').onclick = () => { fileShowDeleted = true; renderFileLibrary(); };
+$('library-path-copy').onclick = guarded(async () => { if (library) await copy(library.canvasDirectory); });
+$('library-folder-open').onclick = guarded(async () => { await bridge.call('openLibraryFolder'); });
+$('theme-toggle').onclick = () => {
+  const open = $('theme-panel').hidden; closeLibrary(); $('theme-panel').hidden = !open;
+  $('theme-toggle').setAttribute('aria-expanded', String(open));
+  if (open) { $('editor').hidden = true; $('file-panel').hidden = true; $('probe').hidden = true; renderThemeOptions(); }
+};
+$('theme-close').onclick = closeThemePanel;
 $('file-path-open').onclick = guarded(async () => {
   const filePath = $<HTMLInputElement>('file-path').value.trim().replace(/^"|"$/g, '');
   if (!filePath) throw new Error('请输入文件绝对路径。');
@@ -255,7 +356,7 @@ $('publish').onclick = guarded(() => publishing(() => bridge.call(editorBase ? '
   ...(editorBase ? { canvasId: editorBase.canvasId, baseRevision: editorBase.revision } : {}),
 })));
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-example]')) button.onclick = guarded(() => publishing(() => bridge.call('example', { name: button.dataset.example })));
-$('probe-toggle').onclick = () => { $('probe').hidden = false; $('editor').hidden = true; $('file-panel').hidden = true; showProbe(); };
+$('probe-toggle').onclick = () => { $('probe').hidden = false; $('editor').hidden = true; $('file-panel').hidden = true; closeThemePanel(); showProbe(); };
 $('probe-close').onclick = () => { $('probe').hidden = true; };
 $('probe-ping').onclick = guarded(async () => { await bridge.call('probe'); bridge.probe.features.serverTools = { state: 'supported', evidence: '用户点击后服务端返回 probeId。' }; showProbe(); });
 $('probe-save').onclick = guarded(async () => { await bridge.call('probeSave', bridge.probe as unknown as Record<string, unknown>); note('能力观察已保存到数据目录的 probes/。'); });
@@ -263,7 +364,7 @@ $('context-send').onclick = guarded(async () => { await bridge.addContext(contex
 const feedback = () => `${context()}\n\n用户修改请求：${($('feedback') as HTMLTextAreaElement).value.trim()}`;
 $('feedback-copy').onclick = guarded(() => copy(feedback()));
 $('feedback-send').onclick = guarded(async () => { if (!($('feedback') as HTMLTextAreaElement).value.trim()) throw new Error('请先填写修改请求。'); await bridge.send(feedback()); showProbe(); note('已发送修改请求。'); });
-bridge.onTheme = () => { applyTheme(); clearSelection(); if (current) renderFrame(current); showProbe(); };
+bridge.onTheme = () => { if (applyTheme()) guarded(async () => { await stateQueue; clearSelection(); if (current) renderFrame(current); })(); showProbe(); };
 bridge.onDisplay = () => {
   document.documentElement.dataset.mode = bridge.displayMode === 'fullscreen' ? 'panel' : 'embedded';
   $('native-panel').hidden = bridge.displayMode === 'fullscreen';

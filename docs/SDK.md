@@ -64,6 +64,8 @@ export default function Canvas() {
 
 使用 `theme.text.secondary` 等标记，避免在画布内硬编码颜色。此接口通过 renderer 封装第三方实现；没有 Cursor 原生 SDK 的 `spacing`、`radius`、IDE 动作等扩展。间距与圆角直接使用数字。持久状态仍使用本项目的 `useCanvasState`，不是第三方 localStorage Hook。
 
+1.1.0 工作台可选择亮白、暖纸、青雾、石墨黑、午夜蓝或跟随宿主。`kind` 仍返回 `light` / `dark`，token 返回当前选择的实际配色；标准组件与自定义 SVG 应使用同一套 token。主题偏好保存在画布库，不属于生成视图的状态键。
+
 ## Hooks 与状态
 
 SDK 提供 `useState`, `useEffect`, `useMemo`, `useCallback`, `useRef`，以及自有 `useCanvasState<T>(key, initial)`。

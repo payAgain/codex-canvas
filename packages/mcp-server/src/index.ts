@@ -27,11 +27,11 @@ if (!compatibility) {
   const watchTimer = setInterval(() => { service.files.sync().catch(e => console.error('Canvas file refresh:', e.message)); }, 2000);
   watchTimer.unref();
 }
-if (option('--ready-file')) await atomicJson(path.resolve(option('--ready-file')!), { pid: process.pid, version: '1.0.0', ...service.bind() });
+if (option('--ready-file')) await atomicJson(path.resolve(option('--ready-file')!), { pid: process.pid, version: '1.1.0', ...service.bind() });
 if (isStdio) {
-  const server = new McpServer({ name: 'codex-canvas', version: '1.0.0' });
+  const server = new McpServer({ name: 'codex-canvas', version: '1.1.0' });
   // A different release must not reuse a host-cached HTML resource.
-  const uri = 'ui://codex-canvas/1.0.0/app.html';
+  const uri = 'ui://codex-canvas/1.1.0/app.html';
   const openMeta = { ui: { resourceUri: uri, ...(compatibility ? { visibility: ['app' as const] } : {}) }, 'openai/ui': { preferredModelDisplayMode: 'fullscreen' } satisfies OpenAIUiToolMetadata };
   const meta = compatibility ? openMeta : { ...openMeta, 'openai/ui': { ...openMeta['openai/ui'], entrypoints: [{ type: 'thread' }] } };
   const resourceMeta = { ui: { csp: { frameDomains: ['about:'] } }, 'openai/ui': { preferredDisplayMode: 'fullscreen', availableDisplayModes: ['fullscreen'] } satisfies OpenAIUiResourceMetadata };
@@ -40,14 +40,14 @@ if (isStdio) {
     catch (e: any) { return { isError: true, content: [{ type: 'text' as const, text: JSON.stringify({ code: e.code ?? 'ERROR', message: e.message }) }] }; }
   };
   function result(data: Record<string, unknown>, binding?: ReturnType<CanvasService['bind']>) {
-    data = { runtimeVersion: '1.0.0', ...data };
+    data = { runtimeVersion: '1.1.0', ...data };
     return { content: [{ type: 'text' as const, text: JSON.stringify({ ...data, ...(binding ? { previewUrl: binding.previewUrl } : {}) }) }],
       structuredContent: { ...data, ...(binding ? { canvasId: binding.canvasId, previewUrl: binding.previewUrl, probeId: binding.probeId } : {}) },
       ...(binding ? { _meta: { uiSession: binding.uiSession } } : {}) };
   }
   registerAppResource(server, 'canvas-app', uri, { description: 'Codex Canvas native conversation panel', _meta: resourceMeta }, async () => ({ contents: [{ uri, mimeType: RESOURCE_MIME_TYPE, text: html, _meta: resourceMeta }] }));
   // Older saved tool cards can request their original URI after reconnecting.
-  for (const [index, legacyUri] of ['ui://codex-canvas/app.html', 'ui://codex-canvas/0.3.1/app.html', 'ui://codex-canvas/0.4.0/app.html', 'ui://codex-canvas/0.4.1/app.html'].entries()) {
+  for (const [index, legacyUri] of ['ui://codex-canvas/app.html', 'ui://codex-canvas/0.3.1/app.html', 'ui://codex-canvas/0.4.0/app.html', 'ui://codex-canvas/0.4.1/app.html', 'ui://codex-canvas/1.0.0/app.html'].entries()) {
     registerAppResource(server, `canvas-app-legacy-${index}`, legacyUri, { _meta: resourceMeta }, async () => ({ contents: [{ uri: legacyUri, mimeType: RESOURCE_MIME_TYPE, text: html, _meta: resourceMeta }] }));
   }
   registerAppTool(server, 'canvas_probe', { title: '打开 Canvas / 能力探针', description: 'Open the Canvas workbench and inspect actual host support. Browser preview URL is always included.', inputSchema: {}, _meta: meta }, safe(async () => result({ status: 'probe-ready' }, service.bind())));
@@ -68,7 +68,9 @@ if (isStdio) {
   }));
   if (!compatibility) {
   server.registerTool('canvas_read', { description: 'Read source, manifest and independent state; optionally read an earlier source revision.', inputSchema: { canvasId: z.string().uuid(), revision: z.number().int().positive().optional() }, annotations: { readOnlyHint: true } }, safe(async ({ canvasId, revision }) => result({ ...await store.read(canvasId, revision) })));
-  server.registerTool('canvas_list', { description: 'List saved canvases. Set deleted to list recoverable deleted canvases.', inputSchema: { deleted: z.boolean().optional() }, annotations: { readOnlyHint: true } }, safe(async ({ deleted }) => result({ canvases: await store.list(deleted), workspaceId: store.workspaceId })));
+  server.registerTool('canvas_list', { description: 'List saved canvases and their storage paths. Set deleted to list recoverable deleted canvases.', inputSchema: { deleted: z.boolean().optional() }, annotations: { readOnlyHint: true } }, safe(async ({ deleted }) => {
+    const library = await store.library(); return result({ ...library, canvases: deleted ? library.deleted : library.canvases });
+  }));
   server.registerTool('canvas_delete', { description: 'Move an explicitly identified canvas to the recoverable deleted list. Keeps source files untouched.', inputSchema: deleteSchema, annotations: { destructiveHint: false } }, safe(async ({ canvasId, baseRevision }) => result(await store.setDeleted(canvasId, baseRevision, true))));
   server.registerTool('canvas_restore', { description: 'Restore an explicitly identified deleted canvas with its saved history and state.', inputSchema: deleteSchema, annotations: { destructiveHint: false } }, safe(async ({ canvasId, baseRevision }) => result(await store.setDeleted(canvasId, baseRevision, false))));
   }
@@ -80,6 +82,6 @@ if (isStdio) {
   await server.connect(new StdioServerTransport());
   process.stdin.on('end', () => { http.close(); process.exit(0); });
 } else {
-  console.log(`Codex Canvas 1.0.0\n${service.bind().previewUrl}\nData: ${dataRoot}\nCtrl+C to stop.`);
+  console.log(`Codex Canvas 1.1.0\n${service.bind().previewUrl}\nData: ${dataRoot}\nCtrl+C to stop.`);
 }
 for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => { http.close(); process.exit(0); });

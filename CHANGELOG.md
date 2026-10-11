@@ -6,6 +6,14 @@
 - Redesign the architecture example around runtime boundaries and labeled flows; retain the report, chart and review examples as additional templates.
 - Add diagram-specific Canvas Skill guidance, runnable examples and bilingual documentation with actual rendering captures.
 
+## 1.1.0 — 2026-10-11 (local development)
+
+- Store the default library under the Codex plugin directory, migrate legacy persistent data once, and retain the original library.
+- Make Open file browse the default directory first, with source paths, folder reveal and restore-and-open actions for deleted canvases.
+- Add Bright, Paper, Mist, Graphite and Midnight themes alongside Follow host; persist preferences and apply them to both the shell and renderer.
+- Adapt cached successful canvases to the new theme renderer without changing source or published revisions; retain the old build on adaptation errors.
+- Build only for this iteration; no test suite was added or run. Cross-platform and native upgrade observations remain open.
+
 ## 1.0.0 — 2026-10-10
 
 First public release prepared for GitHub.

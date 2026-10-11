@@ -46,7 +46,7 @@ export class HostBridge {
     this.probe.mode = 'mcp';
     // Inline cards have a fixed layout. Do not feed measured viewport height
     // back into the host's iframe size (especially when restoring old cards).
-    const app = this.app = new App({ name: 'Codex Canvas', version: '1.0.0' }, {}, { autoResize: false });
+    const app = this.app = new App({ name: 'Codex Canvas', version: '1.1.0' }, {}, { autoResize: false });
     const extensions = this.extensions = new OpenAIExtensions(app);
     let initialCanvasId: string | undefined;
     let fileUri: string | undefined, fileName = '画布.tsx', subscribedUri: string | undefined, connected = false, reading = false, reread = false;

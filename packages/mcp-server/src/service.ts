@@ -3,8 +3,9 @@ import { readFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';
 import { CanvasStore, atomicJson } from '../../runtime/src/store.js';
-import { CanvasError, type Json } from '../../runtime/src/contracts.js';
+import { CanvasError, themePreferences, type Json } from '../../runtime/src/contracts.js';
 import { CanvasFiles } from '../../runtime/src/files.js';
+import { openLibraryFolder } from './settings.js';
 
 const id = z.string().uuid();
 const title = z.string().min(1).max(160);
@@ -41,7 +42,12 @@ export class CanvasService {
     const binding = this.binding(token);
     const args = z.record(z.string(), z.unknown()).parse(raw);
     switch (op) {
-      case 'list': return { canvases: await this.store.list(), deleted: await this.store.list(true), workspaceId: this.store.workspaceId, fileErrors: Object.fromEntries(this.files.errors) };
+      case 'list': return { ...await this.store.library(), fileErrors: Object.fromEntries(this.files.errors) };
+      case 'setTheme': return this.store.setTheme(z.enum(themePreferences).parse(args.theme));
+      case 'openLibraryFolder': {
+        await openLibraryFolder(path.join(this.store.dataRoot, 'canvases'));
+        return { opened: true };
+      }
       case 'delete':
       case 'restore': {
         const data = z.object(deleteSchema).parse(args);

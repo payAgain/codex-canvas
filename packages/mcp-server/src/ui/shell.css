@@ -20,7 +20,7 @@ nav { display:flex; flex-direction:column; gap:3px; }
 .workspace { flex:1; min-width:0; position:relative; }
 .toolbar { min-height:65px; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 24px; border-bottom:1px solid var(--line); background:var(--chrome); }
 .breadcrumb { font-size:12px; color:var(--quiet); } .breadcrumb span { padding:0 8px; } .breadcrumb strong { font-weight:500; color:var(--fg); }
-.revision { font-size:11px; color:var(--quiet); margin-top:3px; overflow-wrap:anywhere; }
+.revision { font-size:11px; color:var(--quiet); margin-top:3px; overflow-wrap:anywhere; white-space:pre-wrap; }
 .actions { display:flex; gap:6px; flex-wrap:wrap; }
 .welcome { max-width:960px; padding:40px 24px; margin:auto; min-height:calc(100vh - 100px); }
 .welcome h1 { font-size:24px; font-weight:590; line-height:30px; margin:0 0 10px; }
@@ -138,3 +138,30 @@ input,textarea { width:100%; border:1px solid var(--line); border-radius:6px; pa
 .library-open .canvas-link small { display:block; }
 .library-open .sidebar-label { display:flex; }
 .library-open .sidebar-bottom { margin-top:auto; padding-top:12px; }
+/* The file entry opens the server-controlled library first, including recovery. */
+.folder-actions { margin-top:8px; }
+#library-directory { font:12px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:var(--fill); }
+.library-tabs { display:flex; gap:8px; border-bottom:1px solid var(--line); margin-top:24px; padding-bottom:8px; }
+.library-tabs button[aria-pressed=true] { color:var(--accent); background:var(--fill); }
+.file-library-list { max-height:45vh; overflow:auto; }
+.file-entry-row { padding:12px 0; border-bottom:1px solid var(--line); }
+.file-entry { display:block; width:100%; border:0; border-radius:6px; background:transparent; padding:8px; text-align:left; color:var(--fg); white-space:normal; }
+.file-entry:hover { background:var(--fill); }
+.file-entry strong { font-weight:550; font-size:14px; }
+.file-entry small { display:block; color:var(--muted); font-size:11px; margin-top:5px; white-space:pre-wrap; overflow-wrap:anywhere; }
+.file-entry:disabled { opacity:1; cursor:default; }
+.file-entry-row>.actions { margin-top:4px; }
+.external-files { border-top:1px solid var(--line); padding-top:16px; margin-top:24px; }
+.external-files summary { cursor:pointer; font-size:13px; color:var(--muted); }
+/* Theme previews show the actual surfaces, foreground and accent. */
+.theme-panel { width:min(480px,95vw); }
+.theme-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:16px; }
+.theme-choice { border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg); padding:12px; text-align:left; min-width:0; }
+.theme-choice:hover { background:var(--fill); }
+.theme-choice[aria-pressed=true] { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+.theme-preview { display:flex; align-items:center; gap:8px; height:54px; border:1px solid; border-radius:5px; padding:10px; margin-bottom:10px; }
+.theme-preview i { display:block; width:20px; height:20px; border-radius:50%; }
+.theme-choice strong { display:block; font-size:13px; font-weight:550; }
+.theme-choice small { display:block; color:var(--muted); margin-top:4px; font-size:11px; line-height:1.5; white-space:normal; }
+#theme-status { min-height:20px; }
+@media(max-width:360px) { .theme-options { grid-template-columns:1fr; } }

@@ -8,7 +8,7 @@ Explore function calls, sequences, class relationships and system architecture i
 
 [中文](README.md) · **English**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-22%2B-43853d)](package.json)
 
@@ -156,13 +156,17 @@ Read more: [Architecture and data flow](docs/ARCHITECTURE.md) · [SDK components
 
 ## Data and upgrades
 
-Portable installations use a user data directory outside the plugin cache:
+Version 1.1.0 stores the library in a stable directory under Codex plugins:
 
 | Windows | macOS | Linux |
 |---|---|---|
-| `%LOCALAPPDATA%/CodexCanvas` | `~/Library/Application Support/CodexCanvas` | `$XDG_DATA_HOME/codex-canvas`, falling back to `~/.local/share/codex-canvas` |
+| `%USERPROFILE%/.codex/plugins/codex-canvas/data` | `~/.codex/plugins/codex-canvas/data` | `~/.codex/plugins/codex-canvas/data` |
 
-Source development defaults to `.canvas-data/`. Override with `CANVAS_DATA_DIR` or `--data-dir`. Back up the entire data directory. Preview URLs and ready files contain local session credentials and should not be shared. See [SECURITY.md](SECURITY.md) for data-handling boundaries.
+**Open file** starts in its `canvases/` directory. Browse saved or deleted canvases, restore and open a deleted canvas, copy a source path, or reveal the directory in the system file manager. File information shows the current source revision's location.
+
+The first use migrates an existing legacy library while preserving identities, history, state and deletion status. The original directory is retained. `CODEX_HOME` relocates the default under its `plugins/codex-canvas/data`; `CANVAS_DATA_DIR`, `--data-dir` and an explicit `dataDirectory` take precedence. Source development uses the same default; `package:local` retains the old development directory.
+
+The **Theme** control offers Bright, Paper, Mist, Graphite, Midnight and Follow host. The workbench and canvas switch together, and the choice persists in `preferences.json`. Back up the entire data directory. Preview URLs and ready files contain local session credentials and should not be shared. See [SECURITY.md](SECURITY.md) and [the update record](docs/tasks/P1-LIBRARY-THEMES.md).
 
 ## Documentation
 

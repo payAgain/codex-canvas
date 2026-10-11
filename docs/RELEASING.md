@@ -1,6 +1,6 @@
 # 发布与 GitHub 准备
 
-当前目标版本：1.0.0。上传、创建远程仓库和发布 Release 是单独操作；本地准备不会自动执行它们。
+当前本地开发版本：1.1.0。1.0.0 的公开发布准备与验收记录保留。上传、创建远程仓库和发布 Release 是单独操作；本地准备不会自动执行它们。
 
 ## 构建与检查
 
@@ -20,7 +20,7 @@ node scripts/check-package.mjs
 
 首次下载不含 `node_modules` 的包时，在 `plugins/codex-canvas/` 执行 `npm ci --omit=dev --ignore-scripts --no-audit --no-fund`。预编译的 Windows x64 依赖包只能直接用于对应平台；其他平台使用无依赖的可移植包，重新安装依赖。所有平台仍需要 Node.js 22+。
 
-正式包配置用户数据目录，升级不依赖插件缓存路径。`pnpm package:local` 仅用于维护本机已有 `.canvas-data`；它写入本机绝对路径，**不得作为公开资产上传**。本地打包记录 `.local/latest-release.json` 同样不能上传。
+正式包配置 Codex 插件目录下的固定画布库 `plugins/codex-canvas/data`，升级不依赖版本缓存路径，首次迁移旧库并保留原目录。`pnpm package:local` 仅用于维护本机已有 `.canvas-data`；它写入本机绝对路径，**不得作为公开资产上传**。本地打包记录 `.local/latest-release.json` 同样不能上传。
 
 ## 安装
 

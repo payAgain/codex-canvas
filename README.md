@@ -8,7 +8,7 @@
 
 **中文** · [English](README.en.md)
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-22%2B-43853d)](package.json)
 
@@ -41,11 +41,11 @@ Codex Canvas 是面向 **Codex 桌面端**的开源插件。通过 MCP Apps，�
 
 ## 从查看，到一起修改
 
-- **在聊天旁探索内容** — 支持原生侧边面板与本地浏览器预览，明暗主题随宿主切换。
+- **在聊天旁探索内容** — 支持原生侧边面板与本地浏览器预览，可选亮白、暖纸、青雾、石墨黑、午夜蓝，或跟随宿主。
 - **只修改你选中的部分** — Design mode 支持点选元素、选择父层，再附上修改要求。
 - **打开已有 TSX / JSX** — 使用 SDK 格式的单文件画布；开启文件跟随后，保存源码即可更新预览。
 - **保存进度与交互** — 筛选状态按画布保存；源码保留版本，编译失败时保留最近成功画面。
-- **管理自己的画布库** — 创建、重新打开、删除与恢复；删除画布不会删除外部源文件。
+- **管理自己的画布库** —「打开文件」默认浏览画布目录，显示源码位置与已删除项；删除后可恢复并打开。
 
 ### Design mode：指出哪里，再说明怎么改
 
@@ -156,13 +156,17 @@ npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 
 ## 数据与更新
 
-正式可移植安装使用独立的用户数据目录，升级插件不会把画布放进新的插件缓存：
+1.1.0 默认将画布库放在 Codex 插件目录下的固定位置：
 
 | Windows | macOS | Linux |
 |---|---|---|
-| `%LOCALAPPDATA%/CodexCanvas` | `~/Library/Application Support/CodexCanvas` | `$XDG_DATA_HOME/codex-canvas`，默认 `~/.local/share/codex-canvas` |
+| `%USERPROFILE%/.codex/plugins/codex-canvas/data` | `~/.codex/plugins/codex-canvas/data` | `~/.codex/plugins/codex-canvas/data` |
 
-源码开发默认使用 `.canvas-data/`；`CANVAS_DATA_DIR` 或 `--data-dir` 可指定位置。备份请复制整个数据目录。预览 URL 和 ready 文件包含本地会话凭据，请勿公开；数据处理边界见 [SECURITY.md](SECURITY.md)。
+「打开文件」直接浏览其中的 `canvases/`，可复制目录或源码路径、在系统文件管理器中打开目录，也可恢复已删除的画布。文件信息显示当前版本的真实源码路径。
+
+首次使用新默认目录时会迁移旧版画布库，保留身份、源码历史、交互和删除状态，原目录保留。设置了 `CODEX_HOME` 时，目录位于该目录下的 `plugins/codex-canvas/data`；`CANVAS_DATA_DIR`、`--data-dir` 和显式 `dataDirectory` 仍优先。源码开发使用相同默认目录，`package:local` 继续保留原开发目录。
+
+顶部「主题」可立即切换，工作台和画布同步更新，选择保存到 `preferences.json`。备份请复制整个数据目录。预览 URL 和 ready 文件包含本地会话凭据，请勿公开；数据处理边界见 [SECURITY.md](SECURITY.md)。本次更新范围与记录见 [画布目录与主题](docs/tasks/P1-LIBRARY-THEMES.md)。
 
 ## 文档导航
 

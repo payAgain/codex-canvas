@@ -12,7 +12,7 @@ const release = JSON.parse(await readFile(path.join(root, '.local/latest-release
 assert.equal(release.local, false, 'Only a portable package may pass the public release check.');
 assert.ok(path.resolve(release.stage).startsWith(path.join(root, '.local', 'releases') + path.sep));
 const config = JSON.parse(await readFile(path.join(release.stage, 'canvas-config.json'), 'utf8'));
-assert.deepEqual(config, { storage: 'user' });
+assert.deepEqual(config, { storage: 'plugin' });
 for (const name of ['mcp.json', '.mcp.json']) {
   const text = await readFile(path.join(release.stage, name), 'utf8');
   assert.ok(!text.includes(root) && !/[A-Z]:[\\/]/.test(text), 'Installation contains a local path.');

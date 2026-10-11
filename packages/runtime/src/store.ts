@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile, rename, readdir, open, unlink } from 'node:
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { compile } from './compiler.js';
-import { CanvasError, type Manifest, type CanvasState, type Json, type CanvasDocument, type PartSelection, type CanvasFeedback } from './contracts.js';
+import { CanvasError, themePreferences, type Manifest, type CanvasState, type Json, type CanvasDocument, type PartSelection, type CanvasFeedback, type CanvasPreferences, type ThemePreference, type CanvasLibrary } from './contracts.js';
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export async function atomicJson(file: string, value: unknown) {
@@ -66,6 +66,27 @@ export class CanvasStore {
     }
     return rows.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }
+  async preferences(): Promise<CanvasPreferences> {
+    try {
+      const saved = await json<CanvasPreferences>(path.join(this.dataRoot, 'preferences.json'));
+      return { theme: saved && themePreferences.includes(saved.theme) ? saved.theme : 'system' };
+    } catch (e: any) { if (e.code === 'ENOENT') return { theme: 'system' }; throw e; }
+  }
+  async setTheme(theme: ThemePreference) {
+    if (!themePreferences.includes(theme)) throw new CanvasError('INVALID_THEME', '请选择列表中的主题。');
+    return this.lock(async () => {
+      const preferences: CanvasPreferences = { theme };
+      await atomicJson(path.join(this.dataRoot, 'preferences.json'), preferences);
+      return preferences;
+    });
+  }
+  async library(): Promise<CanvasLibrary> {
+    const [canvases, deleted, preferences] = await Promise.all([this.list(), this.list(true), this.preferences()]);
+    return { canvases, deleted, preferences, workspaceId: this.workspaceId, dataDirectory: this.dataRoot,
+      canvasDirectory: path.join(this.dataRoot, 'canvases'),
+      sourcePaths: Object.fromEntries([...canvases, ...deleted].map(m => [m.canvasId, path.join(this.dir(m.canvasId), 'source', `${m.sourceRevision}.tsx`)])),
+    };
+  }
   async setDeleted(id: string, baseRevision: number, deleted: boolean) {
     return this.lock(async () => {
       const manifest = await this.manifest(id, true);
@@ -105,11 +126,33 @@ export class CanvasStore {
     const rev = revision ?? manifest.sourceRevision;
     if (!Number.isSafeInteger(rev) || rev < 1 || rev > manifest.sourceRevision) throw new CanvasError('INVALID_REVISION', '源码版本无效。');
     const dir = this.dir(id);
-    const source = await readFile(path.join(dir, 'source', `${rev}.tsx`), 'utf8');
+    const sourcePath = path.join(dir, 'source', `${rev}.tsx`);
+    const source = await readFile(sourcePath, 'utf8');
     const state = await json<CanvasState>(path.join(dir, 'state.json'));
-    const document: CanvasDocument = { manifest, source, state };
+    const document: CanvasDocument = { manifest, source, sourcePath, state };
     if (includeBuild && manifest.buildHash) {
-      const built = await json<{ bundle: string; css: string }>(path.join(dir, 'builds', `${manifest.buildHash}.json`));
+      let built = await json<{ bundle: string; css: string; themeVersion?: number }>(path.join(dir, 'builds', `${manifest.buildHash}.json`));
+      // Bundles contain the renderer. Upgrade its theme adapter without changing
+      // the user's source/history, using the last successfully published source.
+      if (built.themeVersion !== 1 && manifest.publishedRevision) {
+        const cache = path.join(dir, 'builds', `${manifest.buildHash}.theme-1.json`);
+        const original = built;
+        try {
+          try { built = await json<typeof built>(cache); }
+          catch (e: any) {
+            if (e.code !== 'ENOENT') throw e;
+            const published = await readFile(path.join(dir, 'source', `${manifest.publishedRevision}.tsx`), 'utf8');
+            const refreshed = await compile(published, this.projectRoot);
+            if (refreshed.bundle) {
+              const adapted = { bundle: refreshed.bundle, css: refreshed.css ?? '', themeVersion: 1 };
+              await atomicJson(cache, adapted); built = adapted;
+            } else document.rendererDiagnostics = refreshed.diagnostics;
+          }
+        } catch (e: any) {
+          built = original;
+          document.rendererDiagnostics = [{ phase: 'bundle', file: 'canvas.tsx', message: `主题适配失败：${String(e.message).slice(0, 800)}` }];
+        }
+      }
       Object.assign(document, built);
     }
     return document;
@@ -140,7 +183,7 @@ export class CanvasStore {
       // A process crash can leave an uncommitted source; only the manifest is authoritative.
       await writeFile(path.join(dir, 'source', `${revision}.tsx`), source);
       const built = await compile(source, this.projectRoot);
-      if (built.buildHash) await atomicJson(path.join(dir, 'builds', `${built.buildHash}.json`), { bundle: built.bundle, css: built.css });
+      if (built.buildHash) await atomicJson(path.join(dir, 'builds', `${built.buildHash}.json`), { bundle: built.bundle, css: built.css, themeVersion: 1 });
       const now = new Date().toISOString();
       const manifest: Manifest = {
         canvasId, workspaceId: this.workspaceId, title: title.trim(), sdkVersion: '0.1', sourceRevision: revision,

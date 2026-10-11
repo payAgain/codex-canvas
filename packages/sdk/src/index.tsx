@@ -4,10 +4,11 @@ export { Page, Section, RelationshipGraph, H1, H2, H3, Text, Code, Stack, Row, G
 export { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 export type { ReactNode, CSSProperties } from 'react';
 import { useSyncExternalStore, useCallback } from 'react';
+import type { ThemeId } from '../../renderer/src/themes.js';
 
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 declare global {
-  interface Window { __CANVAS_BOOT__: { channel: string; values: Record<string, Json>; theme: 'light' | 'dark' }; }
+  interface Window { __CANVAS_BOOT__: { channel: string; values: Record<string, Json>; theme: 'light' | 'dark'; themeId?: ThemeId }; }
 }
 const listeners = new Set<() => void>();
 const initial = typeof window === 'undefined' ? {} : window.__CANVAS_BOOT__?.values ?? {};
