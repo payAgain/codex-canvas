@@ -15,6 +15,12 @@ for (const name of ['plugin.json', '.codex-plugin/plugin.json']) assert.equal((a
 for (const file of ['LICENSE', 'CHANGELOG.md', 'CONTRIBUTING.md', 'SECURITY.md', '.github/workflows/ci.yml', 'dist/server.mjs', 'dist/app.html']) await access(path.join(root, file));
 const html = await readFile(path.join(root, 'dist/app.html'), 'utf8'); assert.ok(html.includes(`data-version="${pkg.version}"`));
 const files = [...new Set(execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean))];
+// Existing ignored files can hide broken links until a clean checkout runs CI.
+// Accept only files and directories included in the Git publication candidates.
+const publicPaths = new Set(['.']);
+for (const file of files) {
+  for (let name = file; name !== '.'; name = path.posix.dirname(name)) publicPaths.add(name);
+}
 const forbidden = /(^|\/)(node_modules|\.canvas-data|\.local|canvas-research-20261010|\.env)(\/|$)/;
 const secrets = [/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/, /\bgh[pousr]_[A-Za-z0-9]{30,}\b/, /\bsk-[A-Za-z0-9_-]{30,}\b/, /#session=[a-f0-9]{40,}/, /[A-Za-z]:[\\/]Users[\\/][^\\/\s]+[\\/]/];
 for (const file of files) {
@@ -28,7 +34,10 @@ for (const file of files) {
       const target = match[1].split('#')[0];
       if (!target || /^(?:https?:|mailto:|#)/.test(target)) continue;
       assert.ok(!path.isAbsolute(target), `Absolute documentation link in ${file}`);
-      await access(path.resolve(root, path.dirname(file), decodeURIComponent(target))).catch(() => { throw new Error(`Broken local link in ${file}: ${target}`); });
+      const resolved = path.resolve(root, path.dirname(file), decodeURIComponent(target));
+      const relative = path.relative(root, resolved).split(path.sep).join('/') || '.';
+      assert.ok(publicPaths.has(relative), `Documentation link outside Git publication candidates in ${file}: ${target}`);
+      await access(resolved).catch(() => { throw new Error(`Broken local link in ${file}: ${target}`); });
     }
   }
 }

@@ -109,6 +109,6 @@ P0 使用标准 MCP Apps 页面即可，组件兼容层在 P1 接入。
 - [插件扩展](https://developers.openai.com/plugins/build/extensions)
 - [MCP 服务与 UI 快速开始](https://developers.openai.com/plugins/build/app-quickstart)
 - [插件打包](https://developers.openai.com/plugins/build/plugins)
-- [MCP Extensions 官方示例快照](../../canvas-research-20261010/mcp-extensions/plugins/bits-and-bolts/README.md)
+- [MCP Extensions 官方示例来源与快照提交](../research/sources.json)
 
 最后一项是本地研究副本，仅在本机迁移目录存在时可用。公共来源与提交见 [来源清单](../research/sources.json)。
