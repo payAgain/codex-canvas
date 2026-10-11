@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile, rename, readdir, open, unlink } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, rename, readdir, open, unlink, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { compile } from './compiler.js';
@@ -95,6 +95,19 @@ export class CanvasStore {
       else delete manifest.deletedAt;
       await atomicJson(path.join(this.dir(id), 'manifest.json'), manifest);
       return { ok: true, manifest };
+    });
+  }
+  async purge(id: string, baseRevision: number, deletedAt: string, confirmTitle: string) {
+    return this.lock(async () => {
+      const manifest = await this.manifest(id, true);
+      if (!manifest.deletedAt) throw new CanvasError('NOT_DELETED', '请先将画布移到已删除列表。', 409);
+      if (manifest.sourceRevision !== baseRevision) throw new CanvasError('REVISION_CONFLICT', '画布已更新，请刷新列表后重新确认。', 409);
+      if (manifest.deletedAt !== deletedAt) throw new CanvasError('DELETION_CONFLICT', '画布的删除状态已变化，请刷新列表后重新确认。', 409);
+      if (manifest.title !== confirmTitle) throw new CanvasError('CONFIRMATION_MISMATCH', '请输入完整画布标题以确认永久删除。', 409);
+      // Delete only the validated library identity. An imported/watched source
+      // path is external user content and is never a deletion target.
+      await rm(this.dir(id), { recursive: true, force: true, maxRetries: 3 });
+      return { ok: true, canvasId: id, permanentlyDeleted: true };
     });
   }
   async saveFeedback(id: string, sourceRevision: number, publishedRevision: number, selection: PartSelection, request: string) {

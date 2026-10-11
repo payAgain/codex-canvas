@@ -8,7 +8,7 @@
 
 **中文** · [English](README.en.md)
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.1-blue)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-22%2B-43853d)](package.json)
 
@@ -45,7 +45,7 @@ Codex Canvas 是面向 **Codex 桌面端**的开源插件。通过 MCP Apps，�
 - **只修改你选中的部分** — Design mode 支持点选元素、选择父层，再附上修改要求。
 - **打开已有 TSX / JSX** — 使用 SDK 格式的单文件画布；开启文件跟随后，保存源码即可更新预览。
 - **保存进度与交互** — 筛选状态按画布保存；源码保留版本，编译失败时保留最近成功画面。
-- **管理自己的画布库** —「打开文件」默认浏览画布目录，显示源码位置与已删除项；删除后可恢复并打开。
+- **管理自己的画布库** —「打开文件」默认浏览画布目录，显示源码位置与已删除项；列表可直接关闭，已删除画布可恢复或确认后永久删除。
 
 ### Design mode：指出哪里，再说明怎么改
 
@@ -65,14 +65,16 @@ cd codex-canvas
 npm install --global pnpm@11.25.0
 pnpm install --frozen-lockfile
 pnpm build
-pnpm canvas open examples/architecture.tsx
+pnpm canvas open examples/architecture.tsx --browser
 ```
 
-打开命令输出的本地预览链接，即可操作第一张画布。换成 `examples/call-graph.tsx`、`examples/sequence.tsx` 等路径，就能体验其他示例；`pnpm start` 打开完整工作台。
+上面的 `--browser` 明确启动独立浏览器示例；打开命令输出的本地预览链接即可操作。换成 `examples/call-graph.tsx`、`examples/sequence.tsx` 等路径就能体验其他示例；`pnpm start` 打开独立浏览器工作台。在 Codex 聊天中，画布必须通过下方的插件原生入口打开。
 
 ### 在 Codex 中使用
 
 安装插件后，直接描述你需要的内容：
+
+> 使用 Codex Canvas 插件的原生 MCP App 面板打开画布。必须调用 canvas_open_file、canvas_open 或 canvas_publish；不要打开浏览器或 localhost 预览，不要使用 CLI open / --serve 回退。如果原生工具或连接不可用，保留源码并说明具体原因，停止打开步骤。
 
 > 阅读这个项目，从请求入口画出关键函数的调用关系。点选函数时展示职责和源码位置，明确标出异常分支，不要猜测不存在的调用。
 
@@ -80,7 +82,7 @@ pnpm canvas open examples/architecture.tsx
 
 > 用 Codex Canvas 画出这个接口的时序图，展示调用与返回，支持切换成功、超时和重试路径。再用 UML 类图解释涉及的类与接口。
 
-内置 [Canvas Skill](skills/canvas/SKILL.md) 会引导 Codex 编写、发布和打开画布。也可以点击工作台的「打开文件」。**聊天中的普通文件路径链接由 Codex 决定打开方式，可能打开外部编辑器；预览请使用 Canvas 的打开入口。**
+内置 [Canvas Skill](skills/canvas/SKILL.md) 要求 Codex 通过插件原生工具打开画布。MCP 进程不启动浏览器服务、不返回浏览器链接；连接不可用时停止打开步骤，不自动回退。也可以点击原生工作台的「打开文件」。**聊天中的普通文件路径链接由 Codex 决定打开方式，可能打开外部编辑器；请使用 Canvas 插件打开入口。**
 
 ## 安装到 Codex
 
@@ -163,6 +165,8 @@ npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 | `%USERPROFILE%/.codex/plugins/codex-canvas/data` | `~/.codex/plugins/codex-canvas/data` | `~/.codex/plugins/codex-canvas/data` |
 
 「打开文件」直接浏览其中的 `canvases/`，可复制目录或源码路径、在系统文件管理器中打开目录，也可恢复已删除的画布。文件信息显示当前版本的真实源码路径。
+
+「画布列表」展开后，右上角的 × 或 Esc 可关闭列表。「已删除」中的「永久删除」需要输入完整标题确认，删除该画布在当前库中的源码历史、构建、交互状态和修改记录；外部 TSX / JSX 文件与旧迁移备份保留，当前库内无法恢复。
 
 首次使用新默认目录时会迁移旧版画布库，保留身份、源码历史、交互和删除状态，原目录保留。设置了 `CODEX_HOME` 时，目录位于该目录下的 `plugins/codex-canvas/data`；`CANVAS_DATA_DIR`、`--data-dir` 和显式 `dataDirectory` 仍优先。源码开发使用相同默认目录，`package:local` 继续保留原开发目录。
 

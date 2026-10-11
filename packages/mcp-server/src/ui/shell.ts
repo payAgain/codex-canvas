@@ -27,6 +27,7 @@ let current: CanvasDocument | undefined;
 let editorBase: { canvasId: string; revision: number } | undefined;
 let manifests: Manifest[] = [];
 let deleted: Manifest[] = [], showDeleted = false, designEnabled = false;
+let purgeTarget: Manifest | undefined;
 let selection: { canvasId: string; sourceRevision: number; publishedRevision: number; part: PartSelection } | undefined;
 let loading = false, busy = false, loadEpoch = 0;
 let stateQueue: Promise<void> = Promise.resolve();
@@ -61,7 +62,10 @@ function resetCanvas() {
 function updateSelectionButtons() {
   $<HTMLButtonElement>('selection-attach').disabled = !bridge.canAttach;
   $<HTMLButtonElement>('selection-send').disabled = !bridge.canSend;
-  $('selection-host-note').textContent = bridge.canAttach ? '添加到聊天后，在聊天框继续输入要求。只有点击发送才会启动 AI。' : '当前环境不能添加聊天附件。复制选区后粘贴到聊天框，即可让 AI 修改。';
+  $('selection-host-note').textContent = !bridge.app
+    ? '当前通过独立浏览器打开，没有宿主聊天接口。请在 Codex 中调用 Codex Canvas 插件打开此画布，或复制选区后粘贴到聊天框。'
+    : bridge.canAttach ? '添加到聊天后，在聊天框继续输入要求。只有点击发送才会启动 AI。'
+    : '画布已在原生插件中打开，但宿主未提供聊天上下文接口。可复制选区后粘贴到聊天框。';
 }
 async function selectionContext(requireRequest = false) {
   const chosen = selection;
@@ -85,7 +89,7 @@ function renderList() {
   $('trash-toggle').textContent = showDeleted ? '返回画布列表' : `已删除 (${deleted.length})`;
   $('library-label').textContent = showDeleted ? '已删除的画布' : '最近的画布';
   for (const m of showDeleted ? deleted : manifests) {
-    const row = document.createElement('div'); row.className = 'canvas-row';
+    const row = document.createElement('div'); row.className = `canvas-row${showDeleted ? ' canvas-row-deleted' : ''}`;
     const button = document.createElement('button'); button.className = `canvas-link ${current?.manifest.canvasId === m.canvasId ? 'active' : ''}`;
     button.textContent = m.title; const small = document.createElement('small'); small.textContent = `r${m.sourceRevision} · ${m.diagnostics.length ? '待修复' : '已发布'}`; button.append(small);
     button.disabled = showDeleted;
@@ -104,9 +108,45 @@ function renderList() {
         note(restoring ? '画布已恢复。' : `「${m.title}」已移到已删除，可随时恢复。源 TSX / JSX 文件保留。`);
       } finally { busy = false; action.disabled = false; }
     });
-    row.append(button, action); $('canvases').append(row);
+    row.append(button);
+    if (showDeleted) { const actions = document.createElement('div'); actions.className = 'actions'; actions.append(action, purgeButton(m)); row.append(actions); }
+    else row.append(action);
+    $('canvases').append(row);
   }
   if (!$('canvases').childElementCount) { const empty = document.createElement('p'); empty.className = 'library-empty'; empty.textContent = showDeleted ? '没有已删除的画布' : '还没有画布'; $('canvases').append(empty); }
+}
+function purgeButton(manifest: Manifest) {
+  const button = document.createElement('button'); button.className = 'danger-quiet'; button.textContent = '永久删除';
+  button.setAttribute('aria-label', `永久删除 ${manifest.title}`);
+  button.onclick = () => {
+    if (busy || !manifest.deletedAt) return;
+    purgeTarget = manifest;
+    $('purge-target').textContent = manifest.title; $('purge-error').textContent = '';
+    $<HTMLInputElement>('purge-title').value = ''; $<HTMLButtonElement>('purge-confirm').disabled = true;
+    $<HTMLDialogElement>('purge-dialog').showModal(); $<HTMLInputElement>('purge-title').focus();
+  };
+  return button;
+}
+function updatePurgeConfirmation() {
+  $<HTMLButtonElement>('purge-confirm').disabled = busy || !purgeTarget || $<HTMLInputElement>('purge-title').value !== purgeTarget.title;
+}
+async function confirmPurge() {
+  const target = purgeTarget, confirmation = $<HTMLInputElement>('purge-title').value;
+  if (busy || !target?.deletedAt || confirmation !== target.title) return;
+  busy = true; updatePurgeConfirmation();
+  $<HTMLInputElement>('purge-title').disabled = true; $<HTMLButtonElement>('purge-cancel').disabled = true;
+  $('purge-error').textContent = '';
+  try {
+    await stateQueue;
+    await bridge.call('purge', { canvasId: target.canvasId, baseRevision: target.sourceRevision, deletedAt: target.deletedAt, confirmTitle: confirmation });
+    $<HTMLDialogElement>('purge-dialog').close();
+    if (current?.manifest.canvasId === target.canvasId) resetCanvas();
+    await refreshList(); note(`「${target.title}」已永久删除。外部源文件保留。`);
+  } catch (e: any) { $('purge-error').textContent = e.message; }
+  finally {
+    busy = false; $<HTMLInputElement>('purge-title').disabled = false; $<HTMLButtonElement>('purge-cancel').disabled = false;
+    updatePurgeConfirmation();
+  }
 }
 async function refreshList() {
   const result = await bridge.call<CanvasLibrary & { fileErrors?: Record<string, string> }>('list');
@@ -118,7 +158,10 @@ async function refreshList() {
   const next = result.canvases;
   if (current && result.fileErrors?.[current.manifest.canvasId]) note(`文件更新暂停：${result.fileErrors[current.manifest.canvasId]}。当前保留最近成功视图。`);
   if (JSON.stringify(next) !== JSON.stringify(manifests) || JSON.stringify(result.deleted ?? []) !== JSON.stringify(deleted)) { manifests = next; deleted = result.deleted ?? []; renderList(); }
-  if (current && !manifests.some(m => m.canvasId === current!.manifest.canvasId)) { resetCanvas(); note('此画布已在其他面板删除，可从已删除列表恢复。'); }
+  if (current && !manifests.some(m => m.canvasId === current!.manifest.canvasId)) {
+    const recoverable = deleted.some(m => m.canvasId === current!.manifest.canvasId);
+    resetCanvas(); note(recoverable ? '此画布已在其他面板删除，可从已删除列表恢复。' : '此画布已从当前画布库移除。');
+  }
   updateHeader();
   if (!$('file-panel').hidden) renderFileLibrary();
 }
@@ -286,7 +329,7 @@ function renderFileLibrary() {
           await refreshList(); await loadCanvas(m.canvasId); $('file-panel').hidden = true; note('画布已恢复，源码与交互状态已保留。');
         } finally { busy = false; restore.disabled = false; }
       });
-      actions.append(restore);
+      actions.append(restore, purgeButton(m));
     }
     row.append(entry, actions); list.append(row);
   }
@@ -310,6 +353,17 @@ $('selection-send').onclick = guarded(async () => {
 $('native-panel').onclick = guarded(() => bridge.openPanel());
 $('new').onclick = () => openEditor(true);
 function closeLibrary() { document.documentElement.classList.remove('library-open'); $('library-toggle').setAttribute('aria-expanded', 'false'); }
+$('library-close').onclick = () => { closeLibrary(); $('library-toggle').focus(); };
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !$<HTMLDialogElement>('purge-dialog').open && document.documentElement.classList.contains('library-open')) {
+    event.preventDefault(); closeLibrary(); $('library-toggle').focus();
+  }
+});
+$('purge-title').oninput = updatePurgeConfirmation;
+$('purge-confirm').onclick = () => { void confirmPurge(); };
+$('purge-cancel').onclick = () => { if (!busy) $<HTMLDialogElement>('purge-dialog').close(); };
+$('purge-dialog').addEventListener('cancel', event => { if (busy) event.preventDefault(); });
+$('purge-dialog').addEventListener('close', () => { purgeTarget = undefined; });
 $('library-toggle').onclick = () => { const open = document.documentElement.classList.toggle('library-open'); $('library-toggle').setAttribute('aria-expanded', String(open)); };
 const showFilePanel = guarded(async () => {
   $('file-panel').hidden = false; $('editor').hidden = true; $('probe').hidden = true; closeThemePanel(); closeLibrary();
@@ -393,7 +447,11 @@ async function start() {
   $('connection').textContent = bridge.app ? '● MCP App 已连接' : '● 本地浏览器已连接';
   $('native-panel').hidden = !bridge.app || bridge.displayMode === 'fullscreen';
   updateSelectionButtons();
-  if (bridge.session) { await refreshList(); if (id) await loadCanvas(id); }
+  if (bridge.session) {
+    await refreshList();
+    if (id && manifests.some(m => m.canvasId === id)) await loadCanvas(id);
+    else if (id) note(deleted.some(m => m.canvasId === id) ? '此画布已移到已删除列表，可先恢复。' : '此画布已从当前画布库移除。');
+  }
   setInterval(() => {
     if (loading || busy || !bridge.session || document.hidden) return;
     guarded(async () => {

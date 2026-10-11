@@ -14,6 +14,7 @@ export const publishSchema = { title, source };
 export const updateSchema = { canvasId: id, baseRevision: z.number().int().positive(), title, source };
 export const openFileSchema = { path: z.string().min(1).max(4096), title: title.optional(), watch: z.boolean().default(true) };
 export const deleteSchema = { canvasId: id, baseRevision: z.number().int().positive() };
+export const purgeSchema = { ...deleteSchema, deletedAt: z.string().datetime(), confirmTitle: title };
 const selectionSchema = z.object({ domPath: z.string().min(1).max(2000), tag: z.string().max(40), text: z.string().max(4000), label: z.string().max(160), partId: z.string().max(160).optional() });
 const feature = z.object({ state: z.enum(['supported', 'unsupported', 'unknown']), evidence: z.string().max(1000) });
 const probeSchema = z.object({
@@ -31,12 +32,19 @@ export class CanvasService {
     const token = randomBytes(32).toString('hex');
     const binding = { ...(canvasId ? { canvasId } : {}), probeId: randomUUID() };
     this.sessions.set(token, binding);
-    return { uiSession: token, probeId: binding.probeId, canvasId, previewUrl: `${this.baseUrl}/#session=${token}` };
+    return { uiSession: token, probeId: binding.probeId, canvasId,
+      ...(this.baseUrl ? { previewUrl: `${this.baseUrl}/#session=${token}` } : {}) };
   }
   binding(token: string) {
     const session = this.sessions.get(token);
     if (!session) throw new CanvasError('INVALID_SESSION', '会话已过期，请重新打开画布。', 401);
     return session;
+  }
+  async purge(data: { canvasId: string; baseRevision: number; deletedAt: string; confirmTitle: string }) {
+    const result = await this.store.purge(data.canvasId, data.baseRevision, data.deletedAt, data.confirmTitle);
+    for (const binding of this.sessions.values()) if (binding.canvasId === data.canvasId) delete binding.canvasId;
+    this.files.errors.delete(data.canvasId);
+    return result;
   }
   async call(token: string, op: string, raw: unknown) {
     const binding = this.binding(token);
@@ -56,6 +64,7 @@ export class CanvasService {
         this.files.errors.delete(data.canvasId);
         return result;
       }
+      case 'purge': return this.purge(z.object(purgeSchema).parse(args));
       case 'feedback': {
         const data = z.object({ canvasId: id, sourceRevision: z.number().int().positive(), publishedRevision: z.number().int().positive(), selection: selectionSchema, request: z.string().max(4000) }).parse(args);
         this.assertBound(binding, data.canvasId);

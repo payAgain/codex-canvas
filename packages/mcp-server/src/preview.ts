@@ -5,10 +5,10 @@ import path from 'node:path';
 // The background service renders in a browser. This helper only starts the
 // trusted server and hands out a separate authenticated view for each open.
 export async function openPreview(root: string, dataRoot: string, filePath?: string, title?: string, watch = true) {
-  const readyFile = path.join(dataRoot, 'preview-1.1.0.json');
+  const readyFile = path.join(dataRoot, 'preview-1.1.1.json');
   async function connect() {
     const ready = JSON.parse(await readFile(readyFile, 'utf8'));
-    if (ready.version !== '1.1.0') throw new Error('预览服务版本不匹配。');
+    if (ready.version !== '1.1.1') throw new Error('预览服务版本不匹配。');
     const url = new URL(ready.previewUrl);
     if (url.protocol !== 'http:' || url.hostname !== '127.0.0.1') throw new Error('预览服务地址无效。');
     const request = async (route: string, token: string, data: unknown) => {

@@ -6,6 +6,16 @@
 - Redesign the architecture example around runtime boundaries and labeled flows; retain the report, chart and review examples as additional templates.
 - Add diagram-specific Canvas Skill guidance, runnable examples and bilingual documentation with actual rendering captures.
 
+## 1.1.1 — 2026-10-11 (local development)
+
+- Require native Codex Canvas MCP App delivery in the Canvas Skill, server initialization instructions and tool descriptions; stop native opening failures instead of launching a browser fallback.
+- Remove the HTTP listener and browser preview URL from stdio plugin processes. Native tool results explicitly declare their presentation mode.
+- Require `--browser` for standalone CLI previews and `--serve` for standalone HTTP servers.
+- Explain disabled chat actions separately for browser mode and native hosts without the required capabilities.
+- Add an explicit close button and Escape action to the canvas library drawer.
+- Add permanent deletion for already-deleted canvases, with exact-title confirmation and server-side revision/deletion-state checks. Preserve external source files and legacy migration backups.
+- Fix CI's stale hardcoded UI version assertion and update the storage regression for the current default. Isolate migration checks from the real user library and verify permanent deletion in temporary data.
+
 ## 1.1.0 — 2026-10-11 (local development)
 
 - Store the default library under the Codex plugin directory, migrate legacy persistent data once, and retain the original library.

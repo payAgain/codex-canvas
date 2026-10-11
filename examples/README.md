@@ -4,15 +4,17 @@
 
 ## 打开示例
 
-完成仓库依赖安装与构建后，在根目录执行：
+在 Codex 中让 Agent 使用插件的 `canvas_open_file` 打开示例，原生面板不可用时保留源码并说明原因，不自动打开浏览器。
+
+仅当需要独立浏览器示例时，完成依赖安装与构建后在仓库根目录执行：
 
 ```sh
-pnpm canvas open examples/architecture.tsx
-pnpm canvas open examples/call-graph.tsx
-pnpm canvas open examples/sequence.tsx
-pnpm canvas open examples/class-diagram.tsx
-pnpm canvas open examples/dependencies.tsx
-pnpm canvas open examples/state-machine.tsx
+pnpm canvas open examples/architecture.tsx --browser
+pnpm canvas open examples/call-graph.tsx --browser
+pnpm canvas open examples/sequence.tsx --browser
+pnpm canvas open examples/class-diagram.tsx --browser
+pnpm canvas open examples/dependencies.tsx --browser
+pnpm canvas open examples/state-machine.tsx --browser
 ```
 
 每次命令都会返回本地预览链接。安装插件后，也可以让 Codex 使用 Canvas 打开文件，或使用工作台的「打开文件」。首页仍提供报告、架构、审查三个快捷模板，其余示例通过文件打开。
@@ -33,6 +35,10 @@ pnpm canvas open examples/state-machine.tsx
 画面见 [README 画廊](../README.md#示例画廊)。选择通过 `useCanvasState` 保存在各自画布中，普通交互不发送 AI 消息。图表保持可读的最小宽度；较窄的侧栏中可以横向滚动。
 
 ## 可以直接使用的提示词
+
+为任意画布要求加上：
+
+> 必须使用 Codex Canvas 插件的原生 MCP App 工具打开并展示画布，不打开浏览器或 localhost 链接，不使用 CLI open / --serve 回退。原生工具或连接不可用时保留源码，说明具体原因并停止打开步骤。
 
 **函数调用关系**
 

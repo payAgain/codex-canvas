@@ -8,7 +8,7 @@ Explore function calls, sequences, class relationships and system architecture i
 
 [中文](README.md) · **English**
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.1-blue)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-22%2B-43853d)](package.json)
 
@@ -45,7 +45,7 @@ These are screenshots of running canvases with Chinese labels. Relationships are
 - **Edit a specific part** — Design mode lets you select an element or its parent and attach an instruction.
 - **Open TSX / JSX files** — Use single-file canvases built with the SDK; file watching updates the preview when source changes.
 - **Keep progress and state** — Filters persist per canvas. Source is versioned, and failed compilation preserves the latest successful view.
-- **Manage a local library** — Create, reopen, delete and restore canvases. Deleting a canvas does not delete its external source file.
+- **Manage a local library** — Close the library drawer directly; create, reopen, restore or permanently delete canvases after confirmation. External source files are preserved.
 
 ### Design mode: point to it, then describe the change
 
@@ -65,14 +65,16 @@ cd codex-canvas
 npm install --global pnpm@11.25.0
 pnpm install --frozen-lockfile
 pnpm build
-pnpm canvas open examples/architecture.tsx
+pnpm canvas open examples/architecture.tsx --browser
 ```
 
-Open the local preview URL printed by the command to use your first canvas. Substitute `examples/call-graph.tsx`, `examples/sequence.tsx` or another example path to explore more. Use `pnpm start` for the full workbench.
+The `--browser` flag explicitly starts a standalone browser example. Open its printed local preview URL, or substitute `examples/call-graph.tsx`, `examples/sequence.tsx` or another example path. Use `pnpm start` for the standalone browser workbench. In Codex chats, canvases must open through the native plugin tools below.
 
 ### Use it in Codex
 
 After installing the plugin, describe the content you want:
+
+> Open the canvas through the Codex Canvas native MCP App panel. Use canvas_open_file, canvas_open or canvas_publish. Do not open a browser or localhost preview, or use CLI open / --serve as a fallback. If native tools or the connection are unavailable, preserve the source, explain the concrete failure and stop the opening step.
 
 > Read this project and trace the key function calls from its request entry point. Selecting a function should reveal its responsibilities and source location. Label error paths and do not invent calls.
 
@@ -80,7 +82,7 @@ After installing the plugin, describe the content you want:
 
 > Draw an interactive sequence diagram for this endpoint, including calls and returns, with success, timeout and retry paths. Explain the involved classes and interfaces in a UML class diagram.
 
-The bundled [Canvas Skill](skills/canvas/SKILL.md) guides Codex through writing, publishing and opening canvases. You can also use the workbench's file picker. **Ordinary file links in chat may open an external editor; use the Canvas opening tools for a preview.**
+The bundled [Canvas Skill](skills/canvas/SKILL.md) requires native plugin delivery. MCP processes do not start browser servers or return browser links; an unavailable native connection stops the opening step instead of triggering a fallback. You can also use the native workbench's file picker. **Ordinary file links in chat may open an external editor; use the Canvas plugin opening tools.**
 
 ## Install in Codex
 
@@ -163,6 +165,8 @@ Version 1.1.0 stores the library in a stable directory under Codex plugins:
 | `%USERPROFILE%/.codex/plugins/codex-canvas/data` | `~/.codex/plugins/codex-canvas/data` | `~/.codex/plugins/codex-canvas/data` |
 
 **Open file** starts in its `canvases/` directory. Browse saved or deleted canvases, restore and open a deleted canvas, copy a source path, or reveal the directory in the system file manager. File information shows the current source revision's location.
+
+Close the library drawer with its × button or Esc. **Permanently delete** appears only in the deleted list and requires the complete canvas title. It removes that canvas's source history, builds, interaction state and feedback from the current library. External TSX / JSX files and legacy migration backups remain; the current library cannot restore the canvas.
 
 The first use migrates an existing legacy library while preserving identities, history, state and deletion status. The original directory is retained. `CODEX_HOME` relocates the default under its `plugins/codex-canvas/data`; `CANVAS_DATA_DIR`, `--data-dir` and an explicit `dataDirectory` take precedence. Source development uses the same default; `package:local` retains the old development directory.
 

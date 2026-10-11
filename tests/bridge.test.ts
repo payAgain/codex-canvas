@@ -26,6 +26,20 @@ test('native bridge never replays mutations after an ambiguous transport failure
   await assert.rejects(bridge.call('update', {}), /connection closed/); assert.equal(calls, 1);
 });
 
+for (const operation of ['purge', 'list']) test(`native ${operation} clears a removed artifact before session renewal`, async () => {
+  const bridge = new HostBridge(); bridge.session = 'before'; let expired = false, renewals = 0;
+  const id = '00000000-0000-4000-8000-000000000001';
+  bridge.app = { async callServerTool({ name, arguments: args }: any) {
+    if (name === 'canvas_connect') { renewals++; assert.deepEqual(args, {}); return { ...success(), _meta: { uiSession: 'after' } }; }
+    if (expired && args.session === 'before') return failure('INVALID_SESSION');
+    return args.op === 'read' ? success({ manifest: { canvasId: id } }) : success({ canvases: [] });
+  } } as any;
+  await bridge.call('read', { canvasId: id });
+  await bridge.call(operation, operation === 'purge' ? { canvasId: id } : {});
+  expired = true; await bridge.call('list');
+  assert.equal(renewals, 1); assert.equal(bridge.session, 'after');
+});
+
 test('binding-sensitive UI calls are serialized to preserve user selection order', async () => {
   const bridge = new HostBridge(); bridge.session = 'token'; const events: string[] = [];
   bridge.app = { async callServerTool({ arguments: args }: any) {

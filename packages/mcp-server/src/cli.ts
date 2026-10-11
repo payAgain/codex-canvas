@@ -2,17 +2,19 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CanvasStore } from '../../runtime/src/store.js';
+import { CanvasError } from '../../runtime/src/contracts.js';
 import { dataDirectory } from './settings.js';
 import { openPreview } from './preview.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const [command, ...args] = process.argv.slice(2);
 const option = (key: string) => { const index = args.indexOf(key); return index < 0 ? undefined : args[index + 1]; };
-const store = new CanvasStore(await dataDirectory(root, option('--data-dir')), root);
 try {
   if (!command || command === 'help') {
-    console.log('canvas open [FILE] [--title TITLE] [--no-watch] | list [--deleted] | read ID [--revision N] | publish FILE [--title TITLE] | update ID FILE --base N [--title TITLE] | delete ID --base N | restore ID --base N\nopen starts a background preview and returns its URL. Delete is recoverable and keeps external source files. Optional: --data-dir PATH.');
+    console.log('canvas open [FILE] --browser [--title TITLE] [--no-watch] | list [--deleted] | read ID [--revision N] | publish FILE [--title TITLE] | update ID FILE --base N [--title TITLE] | delete ID --base N | restore ID --base N\nIn Codex, open canvases with the native plugin tools. CLI open requires --browser to explicitly start a standalone browser preview. Delete is recoverable and keeps external source files. Optional: --data-dir PATH.');
   } else {
+    if (command === 'open' && !args.includes('--browser')) throw new CanvasError('NATIVE_PANEL_REQUIRED', '请在 Codex 中通过 Codex Canvas 插件的 canvas_open_file 或 canvas_open 打开原生画布。独立浏览器预览必须显式加 --browser，不能作为插件打开失败时的自动回退。');
+    const store = new CanvasStore(await dataDirectory(root, option('--data-dir')), root);
     await store.init(); let result: unknown;
     if (command === 'open') result = await openPreview(root, store.dataRoot, args[0]?.startsWith('--') ? undefined : args[0], option('--title'), !args.includes('--no-watch'));
     else if (command === 'list') result = await store.list(args.includes('--deleted'));

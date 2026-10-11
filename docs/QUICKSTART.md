@@ -1,4 +1,4 @@
-# 1.1.0 使用指南
+# 1.1.1 使用指南
 
 安装步骤见 [README](../README.md#安装到-codex)。运行需要 Node.js 22+；正式包的依赖由 `package-lock.json` 锁定。
 
@@ -6,19 +6,23 @@
 
 点击「打开文件」会先浏览默认画布目录中的已保存与已删除画布，可恢复并打开，也可复制目录、源码路径或打开系统文件夹。默认位置为 Codex 用户目录下的 `plugins/codex-canvas/data/canvases/`；当前画布的「文件信息」显示实际源码位置。
 
-打开外部文件时，展开「打开其他 TSX / JSX 文件」，选择文件导入，或填写绝对路径并开启自动更新。在 Codex 中也可让 Agent 调用 `canvas_open_file({ path, watch: true })`。原生面板由宿主展示；宿主不支持时使用返回的预览地址。
+打开外部文件时，展开「打开其他 TSX / JSX 文件」，选择文件导入，或填写绝对路径并开启自动更新。在 Codex 中让 Agent 调用 `canvas_open_file({ path, watch: true })`，已有画布调用 `canvas_open`。插件要求原生 MCP App 展示；工具或宿主连接不可用时保留源码并说明具体原因，不自动打开浏览器。
 
-命令行也可打开文件：
+可复制的打开要求：
+
+> 必须通过 Codex Canvas 插件的原生 MCP App 面板打开画布。调用 canvas_open_file、canvas_open 或 canvas_publish；不要用浏览器、localhost 链接或 CLI open / --serve 回退。原生连接不可用时保留源码并说明原因。
+
+独立浏览器预览仅在明确需要时使用命令行：
 
 ```sh
 # 源码仓库中
-pnpm canvas open examples/architecture.tsx
-pnpm canvas open
+pnpm canvas open examples/architecture.tsx --browser
+pnpm canvas open --browser
 # 已安装或解压的插件目录中
-node dist/cli.mjs open /absolute/path/to/report.tsx
+node dist/cli.mjs open /absolute/path/to/report.tsx --browser
 ```
 
-`open` 自动启动后台预览服务，相同路径复用已有画布，外部保存触发重新编译。源文件不会被画布编辑器回写；两边分别编辑时报告冲突。只有从项目 SDK 导入的单文件 TSX / JSX 受支持，详见 [SDK 契约](SDK.md)。
+不带 `--browser` 的 CLI `open` 返回 `NATIVE_PANEL_REQUIRED`，要求使用原生插件。明确带标志时才启动后台浏览器预览，相同路径复用已有画布，外部保存触发重新编译。源文件不会被画布编辑器回写；两边分别编辑时报告冲突。只有从项目 SDK 导入的单文件 TSX / JSX 受支持，详见 [SDK 契约](SDK.md)。
 
 普通聊天文件链接由 Codex 决定打开方式，可能跳转外部编辑器。插件不能接管全部文件链接；预览请使用上述工具或入口。
 
@@ -47,9 +51,9 @@ node dist/server.mjs --serve --port 0
 
 打开日志返回的完整链接。URL 中的会话令牌用于首次绑定，加载后隐藏，刷新时从当前标签页恢复。链接和数据目录中的 ready 文件含本地凭据，不要公开。
 
-前台服务按 Ctrl+C 停止，关闭浏览器标签页不会停止服务。通过 `open` 启动的后台服务记录在数据目录的 `preview-1.1.0.json`；停止前核对记录中的 PID 对应本插件的 `dist/server.mjs --serve`，不要结束其他 Node 进程。
+前台服务按 Ctrl+C 停止，关闭浏览器标签页不会停止服务。通过 `open --browser` 启动的后台服务记录在数据目录的 `preview-1.1.1.json`；停止前核对记录中的 PID 对应本插件的 `dist/server.mjs --serve`，不要结束其他 Node 进程。
 
-外壳没有开发热重载。修改后重新构建并重启服务，再刷新或使用新链接。每个 MCP stdio 进程也会启动独立回环服务，随其退出。
+外壳没有开发热重载。修改后重新构建并重启服务，再刷新或使用新链接。MCP stdio 进程只通过宿主原生 App 提供画布，不启动 HTTP 服务，不返回浏览器链接。独立 HTTP 服务必须显式使用 `--serve`。
 
 ## 数据与升级
 
@@ -62,8 +66,8 @@ node dist/server.mjs --serve --port 0
 ## 排查问题
 
 1. **工具未出现：** 确认插件已启用，Node 在 Codex 的 PATH 中，重新加载插件。避免同时手动配置重复的 MCP 服务。
-2. **原生面板无法显示：** 用 `canvas_probe` 检查宿主能力，临时使用返回的浏览器入口。不要降低生成 iframe 的 sandbox / CSP。
-3. **选区不能直接发到聊天：** 功能依赖宿主声明的消息能力；浏览器模式可复制上下文。
+2. **原生面板无法显示：** 用 `canvas_probe` 检查宿主连接，确认 `canvas_list.runtimeVersion` 与已安装版本一致。连接缺失或旧版时重新加载插件，必要时重启 Codex，再调用原生工具；不自动转到浏览器。不要降低生成 iframe 的 sandbox / CSP。
+3. **选区不能直接发到聊天：** 画布本身仍可使用。独立浏览器没有宿主聊天接口，需要重新通过插件打开；原生面板也只有宿主声明上下文/消息能力时才能启用对应按钮。
 4. **编译或运行报错：** 检查 SDK 导入和错误位置。编译成功不保证浏览器运行成功，错误或超时会显示提示。
 5. **状态或源码冲突：** 先刷新读取最新版本，再重试修改。
 

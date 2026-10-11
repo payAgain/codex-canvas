@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, access } from 'node:fs/promises';
 import path from 'node:path';
 import { CanvasStore } from '../packages/runtime/src/store.js';
 import { CanvasFiles } from '../packages/runtime/src/files.js';
@@ -58,6 +58,48 @@ test('delete/restore preserve identity and files; deleted artifacts reject reads
   await store.setDeleted(id, 1, false);
   assert.equal((await store.read(id)).state.values.count, 7);
   assert.equal((await files.open(file)).manifest.canvasId, id);
+});
+
+test('permanent deletion requires a current deleted snapshot and an exact title confirmation', async t => {
+  const { store } = await workspace(t);
+  const id = (await store.publish('Confirmation fixture', source())).manifest.canvasId;
+  await assert.rejects(store.purge(id, 1, new Date().toISOString(), 'Confirmation fixture'), { code: 'NOT_DELETED' });
+  const deleted = (await store.setDeleted(id, 1, true)).manifest;
+  await assert.rejects(store.purge(id, 2, deleted.deletedAt!, deleted.title), { code: 'REVISION_CONFLICT' });
+  const earlier = new Date(Date.parse(deleted.deletedAt!) - 1000).toISOString();
+  await assert.rejects(store.purge(id, 1, earlier, deleted.title), { code: 'DELETION_CONFLICT' });
+  await assert.rejects(store.purge(id, 1, deleted.deletedAt!, 'Another canvas'), { code: 'CONFIRMATION_MISMATCH' });
+  assert.equal((await store.list(true))[0]?.canvasId, id);
+  await store.setDeleted(id, 1, false);
+  await assert.rejects(store.purge(id, 1, deleted.deletedAt!, deleted.title), { code: 'NOT_DELETED' });
+  assert.equal((await store.read(id)).source, source());
+  await assert.rejects(store.purge('../outside', 1, deleted.deletedAt!, deleted.title), { code: 'INVALID_ID' });
+});
+
+test('permanent deletion removes library history and feedback while preserving external files and other canvases', async t => {
+  const { store, directory } = await workspace(t);
+  const file = path.join(directory, 'external.tsx'); await writeFile(file, source());
+  const files = new CanvasFiles(store);
+  const first = await files.open(file); const id = first.manifest.canvasId;
+  await store.setState(id, 0, 'count', 7);
+  await store.saveFeedback(id, 1, 1, { domPath: '#root > p', tag: 'p', text: 'Hello canvas', label: 'paragraph' }, 'Update this');
+  await writeFile(file, source('Second revision')); await files.sync();
+  const other = (await store.publish('Kept canvas', source('Kept'))).manifest.canvasId;
+  await store.setTheme('paper');
+  const deleted = (await store.setDeleted(id, 2, true)).manifest;
+  assert.ok((await readFile(path.join(store.dir(id), 'source/1.tsx'), 'utf8')).includes('Hello canvas'));
+  const result = await store.purge(id, 2, deleted.deletedAt!, deleted.title);
+  assert.equal(result.permanentlyDeleted, true);
+  await assert.rejects(access(store.dir(id)), { code: 'ENOENT' });
+  await assert.rejects(store.setDeleted(id, 2, false), { code: 'NOT_FOUND' });
+  await assert.rejects(files.open(file, undefined, true, id), { code: 'NOT_FOUND' });
+  await files.sync();
+  assert.deepEqual((await store.list()).map(m => m.canvasId), [other]);
+  assert.deepEqual(await store.list(true), []);
+  assert.equal(await readFile(file, 'utf8'), source('Second revision'));
+  assert.equal((await store.read(other)).source, source('Kept'));
+  assert.equal((await store.preferences()).theme, 'paper');
+  assert.equal(JSON.parse(await readFile(path.join(store.dataRoot, 'workspace.json'), 'utf8')).workspaceId, store.workspaceId);
 });
 
 test('file watching reuses identity, preserves failed builds, and detects independent edits', async t => {

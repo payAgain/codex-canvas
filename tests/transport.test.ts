@@ -16,6 +16,23 @@ test('failed canvas reads must not switch an existing UI binding', async t => {
   assert.equal((await store.list()).length, 1);
 });
 
+test('permanent deletion authenticates requests and clears every binding for the deleted identity', async t => {
+  const { store } = await workspace(t); const service = new CanvasService(store, root);
+  const id = (await store.publish('Purge fixture', source())).manifest.canvasId;
+  const first = service.bind(id), second = service.bind(id);
+  const deleted = (await store.setDeleted(id, 1, true)).manifest;
+  const args = { canvasId: id, baseRevision: 1, deletedAt: deleted.deletedAt!, confirmTitle: deleted.title };
+  await assert.rejects(service.call('invalid', 'purge', args), { code: 'INVALID_SESSION' });
+  assert.equal((await store.list(true)).length, 1);
+  service.files.errors.set(id, 'Previous file refresh error');
+  await service.call(first.uiSession, 'purge', args);
+  assert.equal(service.binding(first.uiSession).canvasId, undefined);
+  assert.equal(service.binding(second.uiSession).canvasId, undefined);
+  assert.equal(service.files.errors.has(id), false);
+  await assert.rejects(service.call(second.uiSession, 'state', { canvasId: id, baseStateRevision: 0, key: 'count', value: 1 }), { code: 'BINDING_MISMATCH' });
+  await assert.rejects(service.call(first.uiSession, 'read', { canvasId: id }), { code: 'NOT_FOUND' });
+});
+
 test('HTTP authenticates UI requests and refuses cross-origin, invalid host and oversized input', async t => {
   const { store } = await workspace(t); const service = new CanvasService(store, root);
   const server = await serve(service, '<!doctype html><title>Canvas</title>', 0);

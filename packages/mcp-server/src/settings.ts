@@ -21,9 +21,9 @@ async function exists(file: string) {
   try { await access(file); return true; } catch (e: any) { if (e.code === 'ENOENT') return false; throw e; }
 }
 
-async function migrateLibrary(root: string, target: string) {
+async function migrateLibrary(root: string, target: string, legacyDirectory: string) {
   if (await exists(target)) return;
-  const legacy = (await Promise.all([userDataDirectory(), path.join(root, '.canvas-data')].map(async candidate =>
+  const legacy = (await Promise.all([legacyDirectory, path.join(root, '.canvas-data')].map(async candidate =>
     await exists(path.join(candidate, 'workspace.json')) ? candidate : undefined))).find(Boolean);
   if (!legacy) return;
   const parent = path.dirname(target);
@@ -57,13 +57,13 @@ export async function openLibraryFolder(directory: string) {
   });
 }
 
-export async function dataDirectory(root: string, explicit?: string) {
-  if (explicit || process.env.CANVAS_DATA_DIR) return path.resolve(explicit ?? process.env.CANVAS_DATA_DIR!);
+export async function dataDirectory(root: string, explicit?: string, location = { platform: process.platform, home: homedir(), env: process.env }) {
+  if (explicit || location.env.CANVAS_DATA_DIR) return path.resolve(explicit ?? location.env.CANVAS_DATA_DIR!);
   try {
     const config = JSON.parse(await readFile(path.join(root, 'canvas-config.json'), 'utf8'));
     if (typeof config.dataDirectory === 'string' && path.isAbsolute(config.dataDirectory)) return config.dataDirectory;
   } catch (e: any) { if (e.code !== 'ENOENT') throw e; }
-  const directory = pluginDataDirectory();
-  await migrateLibrary(root, directory);
+  const directory = pluginDataDirectory(location.home, location.env);
+  await migrateLibrary(root, directory, userDataDirectory(location.platform, location.home, location.env));
   return directory;
 }

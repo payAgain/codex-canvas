@@ -46,7 +46,7 @@ export class HostBridge {
     this.probe.mode = 'mcp';
     // Inline cards have a fixed layout. Do not feed measured viewport height
     // back into the host's iframe size (especially when restoring old cards).
-    const app = this.app = new App({ name: 'Codex Canvas', version: '1.1.0' }, {}, { autoResize: false });
+    const app = this.app = new App({ name: 'Codex Canvas', version: '1.1.1' }, {}, { autoResize: false });
     const extensions = this.extensions = new OpenAIExtensions(app);
     let initialCanvasId: string | undefined;
     let fileUri: string | undefined, fileName = '画布.tsx', subscribedUri: string | undefined, connected = false, reading = false, reread = false;
@@ -99,7 +99,7 @@ export class HostBridge {
         this.theme = context.theme; this.probe.theme = this.theme; this.onTheme?.();
       }
     };
-    await Promise.race([app.connect(), new Promise<never>((_, reject) => setTimeout(() => reject(new Error('宿主初始化在 8 秒内没有完成。请使用工具返回的浏览器链接。')), 8000))]);
+    await Promise.race([app.connect(), new Promise<never>((_, reject) => setTimeout(() => reject(new Error('原生宿主初始化在 8 秒内没有完成。请重新加载 Codex Canvas 插件，再调用 canvas_open 打开；不会自动切换到浏览器。')), 8000))]);
     this.applyDisplayMode(app.getHostContext()?.displayMode ?? 'inline');
     if (this.displayMode === 'inline' && app.getHostContext()?.availableDisplayModes?.includes('fullscreen')) {
       await this.openPanel().catch(e => { this.probe.features.panel = { state: 'unsupported', evidence: String(e).slice(0, 1000) }; });
@@ -141,7 +141,7 @@ export class HostBridge {
     this.onDisplay?.();
   }
   async openPanel() {
-    if (!this.app?.getHostContext()?.availableDisplayModes?.includes('fullscreen')) throw new Error('宿主未声明可展开的原生面板，请使用宿主面板入口或浏览器预览。');
+    if (!this.app?.getHostContext()?.availableDisplayModes?.includes('fullscreen')) throw new Error('宿主未声明可展开的原生面板，请使用宿主面板入口；当前保留插件内嵌视图。');
     const result = await this.app.requestDisplayMode({ mode: 'fullscreen' });
     this.applyDisplayMode(result.mode);
     if (result.mode !== 'fullscreen') throw new Error('宿主未切换到扩展面板，当前保留内嵌视图。');
@@ -171,9 +171,10 @@ export class HostBridge {
         result = await this.app.callServerTool({ name: 'canvas_ui', arguments: { session: this.session, op, args } });
       }
       if (result.isError) throw new Error(result.content.map(c => c.type === 'text' ? c.text : '').join('\n'));
-      const data = result.structuredContent as { manifest?: { canvasId?: string } } | undefined;
+      const data = result.structuredContent as { manifest?: { canvasId?: string }; canvases?: { canvasId: string }[] } | undefined;
       if (data?.manifest?.canvasId && ['read', 'publish', 'update', 'openFile', 'example'].includes(op)) this.canvasId = data.manifest.canvasId;
-      if (op === 'delete' && args.canvasId === this.canvasId) this.canvasId = undefined;
+      if (['delete', 'purge'].includes(op) && args.canvasId === this.canvasId) this.canvasId = undefined;
+      if (op === 'list' && this.canvasId && data?.canvases && !data.canvases.some(m => m.canvasId === this.canvasId)) this.canvasId = undefined;
       this.probe.features.serverTools = { state: 'supported', evidence: 'canvas_ui 调用成功。' };
       return result.structuredContent as T;
     }
