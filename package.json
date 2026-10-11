@@ -1,0 +1,41 @@
+{
+  "name": "codex-canvas-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Interactive React artifacts for the Codex desktop application.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "node dist/server.mjs --serve",
+    "dev": "pnpm build && pnpm start",
+    "canvas": "node dist/cli.mjs",
+    "demo": "node scripts/publish-project-report.mjs",
+    "test": "node scripts/test.mjs",
+    "check": "pnpm build && pnpm test && pnpm release:check",
+    "package:local": "node scripts/package-local.mjs --local",
+    "package:release": "node scripts/package-local.mjs",
+    "release:lock": "node scripts/update-release-lock.mjs",
+    "release:check": "node scripts/check-release.mjs",
+    "mcp": "node dist/server.mjs --stdio"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "1.7.5",
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "@openai/mcp-extensions": "0.1.0",
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "esbuild": "0.28.2",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "typescript": "5.9.3",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.15"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

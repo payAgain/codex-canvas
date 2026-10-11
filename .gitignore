@@ -1,0 +1,25 @@
+# Dependencies and build products
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.pnpm-store/
+
+# Local runtime data and probe output
+.local/
+.canvas-data/
+*.log
+.env
+.env.*
+!.env.example
+
+# Editor and operating system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Research checkouts retain their own Git repositories.
+# Portable reports and provenance are tracked under docs/research/.
+/canvas-research-20261010/

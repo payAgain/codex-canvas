@@ -1,0 +1,59 @@
+{
+  "researchedOn": "2026-10-10",
+  "target": "Codex desktop",
+  "method": "Official documentation and source inspection; no runtime validation",
+  "pathBase": "repository root",
+  "repositories": [
+    {
+      "name": "codex-canvas",
+      "url": "https://github.com/Xiangyu-CAS/codex-canvas.git",
+      "commit": "b8018398c3cbed8fad2622ade72a3f9c345b53c9",
+      "commitDate": "2026-10-01",
+      "localCheckout": "canvas-research-20261010/codex-canvas"
+    },
+    {
+      "name": "cursor-canvas-web",
+      "url": "https://github.com/thisismydesign/cursor-canvas-web.git",
+      "commit": "8d1a172aba11ea5520b11c701c8bd1fa773409d1",
+      "commitDate": "2026-06-20",
+      "localCheckout": "canvas-research-20261010/cursor-canvas-web"
+    },
+    {
+      "name": "cursor-plugins",
+      "url": "https://github.com/cursor/plugins.git",
+      "commit": "d73344bee8cf22e53b9d5f4cf5749d38ba38c174",
+      "commitDate": "2026-10-09",
+      "localCheckout": "canvas-research-20261010/cursor-plugins"
+    },
+    {
+      "name": "glimpse",
+      "url": "https://github.com/YushengAuggie/glimpse.git",
+      "commit": "44717863a5d4adbd007a3d5bbbd0250be26b1200",
+      "commitDate": "2026-10-08",
+      "localCheckout": "canvas-research-20261010/glimpse"
+    },
+    {
+      "name": "mcp-extensions",
+      "url": "https://github.com/openai/mcp-extensions.git",
+      "commit": "0d606217705e0e71eb21fff009619b67b80611dc",
+      "commitDate": "2026-10-09",
+      "localCheckout": "canvas-research-20261010/mcp-extensions"
+    },
+    {
+      "name": "opencanvas",
+      "url": "https://github.com/ashark-ai-05/opencanvas.git",
+      "commit": "8e50f7fc3d0de047c531ac9be5e37255aa9615ec",
+      "commitDate": "2026-10-10",
+      "localCheckout": "canvas-research-20261010/opencanvas"
+    }
+  ],
+  "localCursorSdk": {
+    "redistributed": false,
+    "pathPattern": "~/.cursor/skills-cursor/canvas"
+  },
+  "npmPackage": {
+    "name": "@thisismydesign/cursor-canvas-web",
+    "version": "0.3.0",
+    "license": "MIT"
+  }
+}

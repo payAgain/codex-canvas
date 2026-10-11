@@ -1,0 +1,6 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "codex-canvas",
+  "version": "1.0.0",
+  "description": "Local interactive React canvases with isolated rendering, persistent state and versioned publishing."
+}

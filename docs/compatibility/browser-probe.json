@@ -1,0 +1,45 @@
+{
+  "observedAt": "2026-10-10T08:08:34.529Z",
+  "mode": "browser",
+  "host": {},
+  "theme": "light",
+  "features": {
+    "toolUi": {
+      "state": "supported",
+      "evidence": "本地浏览器外壳已连接，非原生 MCP App。"
+    },
+    "threadEntrypoint": {
+      "state": "unknown",
+      "evidence": "尚未在原生宿主中观察。"
+    },
+    "theme": {
+      "state": "unknown",
+      "evidence": "尚未在原生宿主中观察。"
+    },
+    "serverTools": {
+      "state": "unknown",
+      "evidence": "尚未在原生宿主中观察。"
+    },
+    "modelContext": {
+      "state": "unknown",
+      "evidence": "尚未在原生宿主中观察。"
+    },
+    "message": {
+      "state": "unsupported",
+      "evidence": "浏览器模式使用复制上下文。"
+    },
+    "draft": {
+      "state": "unsupported",
+      "evidence": "浏览器模式无宿主草稿接口。"
+    },
+    "resourceSubscription": {
+      "state": "unknown",
+      "evidence": "尚未在原生宿主中观察。"
+    },
+    "instanceBinding": {
+      "state": "supported",
+      "evidence": "服务端为本界面实例颁发独立令牌。"
+    }
+  },
+  "advertisedCapabilities": {}
+}

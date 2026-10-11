@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": { "noEmit": true, "esModuleInterop": true, "types": ["node", "react", "react-dom"], "lib": ["ES2022", "DOM", "DOM.Iterable"], "paths": { "@codex-canvas/sdk": ["./packages/sdk/src/index.tsx"] } },
+  "include": ["packages/*/src/**/*.ts", "packages/*/src/**/*.tsx"]
+}

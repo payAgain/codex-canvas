@@ -1,0 +1,22 @@
+:root { color-scheme:light; --canvas-bg:#fcfcfc; --canvas-fg:#141414; --canvas-secondary:#141414bd; --canvas-line:#1414141f; --canvas-fill:#1414140f; --canvas-accent:#3685bf; }
+:root[data-mantine-color-scheme=dark] { color-scheme:dark; --canvas-bg:#181818; --canvas-fg:#e4e4e4eb; --canvas-secondary:#e4e4e48d; --canvas-line:#e4e4e41f; --canvas-fill:#e4e4e40a; --canvas-accent:#599ce7; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--canvas-bg); color:var(--canvas-fg); font:14px/20px Inter,'Segoe UI','Microsoft YaHei',sans-serif; }
+#root { min-width:0; }
+a { color:var(--canvas-accent); text-underline-offset:3px; }
+a:focus-visible,summary:focus-visible { outline:2px solid var(--canvas-accent); outline-offset:3px; }
+summary { cursor:pointer; }
+.canvas-page { max-width:960px; margin:0 auto; padding:24px; }
+.canvas-heading { margin-bottom:24px; }
+.canvas-heading h1 { font-size:24px; line-height:30px; margin:0; font-weight:590; }
+.canvas-heading p { color:var(--canvas-secondary); font-size:14px; line-height:20px; margin:8px 0 0; }
+.canvas-section { margin:24px 0; }
+.canvas-section h2 { font-size:18px; line-height:24px; font-weight:590; margin:0 0 12px; }
+.relationship-graph { width:100%; max-height:480px; background:var(--canvas-fill); border-radius:8px; color:var(--canvas-secondary); }
+.graph-edge line { stroke:currentColor; stroke-width:1.5; }
+.graph-edge text { fill:var(--canvas-secondary); font-size:10px; text-anchor:middle; }
+.graph-node { cursor:pointer; outline:none; }
+.graph-node rect { fill:var(--canvas-bg); stroke:var(--canvas-line); stroke-width:1.5; }
+.graph-node text { fill:var(--canvas-fg); text-anchor:middle; font-size:14px; }
+.graph-node.selected rect,.graph-node:focus-visible rect { stroke:var(--canvas-accent); stroke-width:2; }
+@media(max-width:650px) { .canvas-page { padding:20px 16px; } }
