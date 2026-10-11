@@ -1,21 +1,31 @@
 # README 展示图
 
-这些图片是 Codex Canvas 1.0.0 的实际界面截图，采集日期为 2026-10-11。
+这些图片是 Codex Canvas 1.0.0 的实际界面截图，采集日期为 2026-10-11。中英文 README 复用同一组图片，界面内容使用中文。
 
-- `canvas-report.jpg`：内置 [报告示例](../../examples/report.tsx)，展示统计、趋势和筛选入口。
-- `design-mode.jpg`：同一报告的文本选区与局部修改要求，未发送 AI 消息。
+## 软件开发画廊
 
-画廊图片对应可运行源码，显示各示例的首屏及工作台工具栏，部分长内容需要滚动查看：
-
-| 图片 | 源码 | 画面 |
+| 图片 | 可运行源码 | 截图内容 |
 |---|---|---|
-| `example-report.jpg` | [报告](../../examples/report.tsx) | 默认团队、统计与趋势 |
-| `example-architecture.jpg` | [架构](../../examples/architecture.tsx) | 六个逻辑模块与职责详情 |
-| `example-comparison.jpg` | [选型](../../examples/comparison.tsx) | 协作应用场景下的建议与对比 |
-| `example-roadmap.jpg` | [排期](../../examples/roadmap.tsx) | 八周时间条与选中阶段 |
-| `example-charts.jpg` | [图表](../../examples/charts.tsx) | 七天柱状图与来源环形图 |
-| `example-review.jpg` | [审查](../../examples/review.tsx) | 严重程度与发现列表 |
+| `example-call-graph.jpg` | [函数调用](../../examples/call-graph.tsx) | 发布入口、写锁回调、编译与持久化函数 |
+| `example-sequence.jpg` | [时序](../../examples/sequence.tsx) | 成功分支的参与者、生命线、调用和返回 |
+| `example-class-diagram.jpg` | [类图](../../examples/class-diagram.tsx) | 三个真实类的成员、组合与引用 |
+| `example-architecture.jpg` | [架构](../../examples/architecture.tsx) | 本地服务、可信工作台与隔离画布 |
+| `example-dependencies.jpg` | [依赖](../../examples/dependencies.tsx) | 运行时依赖与可选的纯类型引用 |
+| `example-state-machine.jpg` | [状态](../../examples/state-machine.tsx) | 更新失败后源码 r2、成功画面 r1 |
 
-图片均来自独立演示数据目录中的本地浏览器模式，展示的是 Canvas 工作台或画布内容，不是 Codex 原生侧栏截图。所有指标都是内置演示数据，界面没有用户文档、私人路径或会话 URL。演示期间没有发送 AI 消息。
+关系由仓库源码整理，简化范围标在各示例中；状态转换与版本号属于行为示意。这些视图不是自动分析工具。截图显示工作台与主图，较长的详情需要在运行的画布中滚动查看。
 
-更新图片时，优先使用仓库内置示例和独立数据目录，截取真实运行结果。保持示例数据标识与界面状态；不要通过修改截图隐藏不支持的能力。中英文 README 复用这些图片。
+## 其他展示图
+
+保留早期报告类示例的截图，便于文档继续引用：
+
+- `canvas-report.jpg` / `example-report.jpg`：[报告](../../examples/report.tsx)。
+- `design-mode.jpg`：报告文本的选区与局部修改要求；未发送 AI 消息。
+- `example-comparison.jpg`：[选型](../../examples/comparison.tsx)。
+- `example-roadmap.jpg`：[排期](../../examples/roadmap.tsx)。
+- `example-charts.jpg`：[统计图](../../examples/charts.tsx)。
+- `example-review.jpg`：[审查](../../examples/review.tsx)。
+
+报告和统计使用虚构数据；其他旧图是教学案例，非项目承诺或真实评测。
+
+图片均来自独立演示数据目录的本地浏览器模式，不是 Codex 原生侧栏截图。界面没有私人文档、私人路径或会话 URL，采集期间没有发送 AI 消息。更新时捕获真实运行结果，不通过修改截图隐藏不支持的能力。

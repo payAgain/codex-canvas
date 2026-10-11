@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Replace the main README gallery with six source-derived software development canvases: function calls, sequence, UML classes, architecture, dependencies and state transitions.
+- Redesign the architecture example around runtime boundaries and labeled flows; retain the report, chart and review examples as additional templates.
+- Add diagram-specific Canvas Skill guidance, runnable examples and bilingual documentation with actual rendering captures.
+
 ## 1.0.0 — 2026-10-10
 
 First public release prepared for GitHub.

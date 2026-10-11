@@ -4,7 +4,7 @@
 
 ### Turn answers into canvases you can explore.
 
-Create interactive reports, charts and architecture views in Codex. Select a part and refine it in natural language.
+Explore function calls, sequences, class relationships and system architecture in Codex. Select a part and refine it in natural language.
 
 [中文](README.md) · **English**
 
@@ -16,28 +16,28 @@ Create interactive reports, charts and architecture views in Codex. Select a par
 
 </div>
 
-![Canvas workbench with a canvas library, report metrics and an interactive chart](docs/assets/canvas-report.jpg)
+![Codex Canvas architecture: local service, trusted workbench and isolated view](docs/assets/example-architecture.jpg)
 
-<p align="center"><em>Actual running UI · Built-in sample data · Local browser mode</em></p>
+<p align="center"><em>Actual running UI · Source-derived architecture · Local browser mode</em></p>
 
 Codex Canvas is an open-source plugin for **Codex desktop**. It uses MCP Apps to display canvases in supported host side panels, with a standalone local browser preview also available. Source, revisions and interaction state are stored locally, so a canvas can be reopened, explored and edited over time.
 
 ## Gallery
 
-**Six scenarios. Six runnable source files.** Click an image to enlarge it or open its source. Run the examples as they are, or ask Codex to adapt them to your own content.
+**Six diagrams for everyday software development, each runnable and interactive.** The examples use Codex Canvas itself as the subject: follow its function calls, inspect its classes and explore its runtime boundaries. Click an image to enlarge it, or open the TSX file to interact.
 
-| Data report | System architecture |
+| Function call graph | Sequence diagram |
 |:---|:---|
-| [![Report with team filtering, metrics and trends](docs/assets/example-report.jpg)](docs/assets/example-report.jpg) | [![Interactive module diagram with responsibilities](docs/assets/example-architecture.jpg)](docs/assets/example-architecture.jpg) |
-| Filter by team to update metrics, trends and detail rows.<br>[View source →](examples/report.tsx) | Select a module to explore its responsibilities and boundaries.<br>[View source →](examples/architecture.tsx) |
-| **Option comparison** | **Project timeline** |
-| [![Comparison of storage options across use cases](docs/assets/example-comparison.jpg)](docs/assets/example-comparison.jpg) | [![Eight-week timeline with selectable phases](docs/assets/example-roadmap.jpg)](docs/assets/example-roadmap.jpg) |
-| Switch use cases to understand recommendations and tradeoffs.<br>[View source →](examples/comparison.tsx) | Filter phases by status and select a bar to see its scope.<br>[View source →](examples/roadmap.tsx) |
-| **Everyday charts** | **Code review** |
-| [![Grouped bars and a source breakdown donut](docs/assets/example-charts.jpg)](docs/assets/example-charts.jpg) | [![Review findings with severity filters and suggestions](docs/assets/example-review.jpg)](docs/assets/example-review.jpg) |
-| Change the time range to update bars, a donut and totals together.<br>[View source →](examples/charts.tsx) | Filter by severity and inspect findings, files and suggestions.<br>[View source →](examples/review.tsx) |
+| [![Calls from CanvasService.call to compilation and persistence](docs/assets/example-call-graph.jpg)](docs/assets/example-call-graph.jpg) | [![Participants, lifelines, calls and returns](docs/assets/example-sequence.jpg)](docs/assets/example-sequence.jpg) |
+| Follow the publish entry point; select a function for conditions and source locations.<br>[View source →](examples/call-graph.tsx) | Switch between successful and failed compilation to compare writes and responses.<br>[View source →](examples/sequence.tsx) |
+| **UML class diagram** | **System architecture** |
+| [![Class compartments, composition and references](docs/assets/example-class-diagram.jpg)](docs/assets/example-class-diagram.jpg) | [![Node, trusted shell and sandbox runtime boundaries](docs/assets/example-architecture.jpg)](docs/assets/example-architecture.jpg) |
+| Inspect real attributes, methods, composition and references; select a class for its role.<br>[View source →](examples/class-diagram.tsx) | Trace code, state and selections across explicit execution boundaries.<br>[View source →](examples/architecture.tsx) |
+| **Module dependencies** | **State transitions** |
+| [![Consumer-to-provider dependencies with optional type references](docs/assets/example-dependencies.jpg)](docs/assets/example-dependencies.jpg) | [![Publishing, failure, retry and source versus published revisions](docs/assets/example-state-machine.jpg)](docs/assets/example-state-machine.jpg) |
+| Explore layering and toggle type references that disappear after compilation.<br>[View source →](examples/dependencies.tsx) | Switch between first success, failed update and recovery to compare revisions.<br>[View source →](examples/state-machine.tsx) |
 
-Gallery images show running canvas content. Reports and charts use synthetic data; plans, comparisons and reviews are illustrative, not real project commitments or benchmark results. The examples currently use Chinese labels. See the [example guide](examples/README.md) for prompts and usage.
+These are screenshots of running canvases with Chinese labels. Relationships are derived from source with stated simplifications; the state view is conceptual and its revision numbers are illustrative. These are editable examples, not a continuously synchronized code index. See the [example guide](examples/README.md) for opening instructions, prompts and additional report, chart and review examples.
 
 ## Explore it. Then refine it together.
 
@@ -65,20 +65,20 @@ cd codex-canvas
 npm install --global pnpm@11.25.0
 pnpm install --frozen-lockfile
 pnpm build
-pnpm canvas open examples/report.tsx
+pnpm canvas open examples/architecture.tsx
 ```
 
-Open the local preview URL printed by the command to use your first canvas. Substitute `examples/architecture.tsx`, `examples/charts.tsx` or another example path to explore more. Use `pnpm start` for the full workbench.
+Open the local preview URL printed by the command to use your first canvas. Substitute `examples/call-graph.tsx`, `examples/sequence.tsx` or another example path to explore more. Use `pnpm start` for the full workbench.
 
 ### Use it in Codex
 
 After installing the plugin, describe the content you want:
 
-> Use Codex Canvas to turn this delivery data into a report. Start with one conclusion, then show metrics, trends and details with a team filter. Keep sources visible and do not invent data.
+> Read this project and trace the key function calls from its request entry point. Selecting a function should reveal its responsibilities and source location. Label error paths and do not invent calls.
 
 > Open this TSX file with Codex Canvas and follow my subsequent source edits.
 
-> Make an interactive comparison of these two options, with recommendations by use case, supporting evidence and open questions.
+> Draw an interactive sequence diagram for this endpoint, including calls and returns, with success, timeout and retry paths. Explain the involved classes and interfaces in a UML class diagram.
 
 The bundled [Canvas Skill](skills/canvas/SKILL.md) guides Codex through writing, publishing and opening canvases. You can also use the workbench's file picker. **Ordinary file links in chat may open an external editor; use the Canvas opening tools for a preview.**
 
@@ -131,48 +131,28 @@ Enable the plugin and start a new chat. If an existing chat still uses an older 
 
 ## How it works
 
-### One source file, explicit runtime boundaries
+### One source file, three runtime boundaries
 
-```mermaid
-flowchart TB
-  Agent["Codex + Canvas Skill"] -->|Create or edit| MCP["MCP service"]
-  subgraph Local["Local Node service"]
-    MCP --> Runtime["Compiler and revision manager"]
-    Runtime --> Store[("Source · Builds · State")]
-  end
-  subgraph Browser["Browser environment"]
-    Shell["Trusted workbench + Host bridge"] -->|Render / State| Frame["Sandboxed iframe"]
-    Frame --> SDK["Canvas SDK → Renderer"]
-  end
-  MCP <-->|Tools and canvas resources| Shell
-  Shell -. Explicit user request .-> Agent
-```
+The architecture image above is itself a [runnable canvas](examples/architecture.tsx). It groups modules by execution environment; selecting one reveals its responsibilities and source location.
 
-A canvas is a single TSX / JSX file with a default-exported React component and imports only from `@codex-canvas/sdk`. The Node service compiles and stores it; generated code runs in a sandboxed iframe. Third-party components stay behind the renderer adapter, while the trusted workbench handles host messaging.
+| Boundary | Responsibilities | Constraint |
+|---|---|---|
+| Local Node service | Validation, type checking, bundling, revisions and file storage | Compiles generated modules; does not execute generated React code |
+| Trusted workbench | Host bridge, canvas navigation, diagnostics, selections and state | Keeps service tokens and host APIs in the trusted shell |
+| Isolated canvas | React views inside a sandbox iframe | Uses SDK components and hooks; no direct Node or host access |
 
-### The local-edit loop
+A canvas is a single TSX / JSX file with a default React export, importing only from <code>@codex-canvas/sdk</code>. Third-party components stay behind the renderer adapter. Explore publishing and revision retention through the [sequence](examples/sequence.tsx) and [state](examples/state-machine.tsx) examples.
 
-```mermaid
-sequenceDiagram
-  actor User
-  participant Canvas as Workbench
-  participant Agent as Codex
-  participant Runtime as Compiler and revisions
-  User->>Canvas: Select an element and enter instructions
-  User->>Canvas: Explicitly send an edit request
-  Canvas->>Agent: Selection context + Canvas revision
-  Agent->>Runtime: Read current source and submit an edit
-  alt Compilation succeeds
-    Runtime-->>Canvas: Publish the new view
-  else Compilation fails
-    Runtime-->>Canvas: Diagnostics; preserve the good view
-  end
-  Note over User,Canvas: Normal filters save state without starting AI
-```
+### How a targeted edit works
 
-Sending a selection requires host messaging support; browser mode uses copied context. Selections include DOM, text and optional part identifiers, not general AST mapping. Revision checks prevent stale edits from overwriting newer content.
+1. Select an element in Design mode and describe the change.
+2. On an explicit send action, the workbench includes the selection, canvas identity and current revisions.
+3. Codex reads the current source, edits the relevant part and submits a revision.
+4. Successful compilation updates the view. Failure returns diagnostics and keeps the latest successful view.
 
-Explore further: [Architecture](docs/ARCHITECTURE.md) · [SDK components and state](docs/SDK.md) · [Security boundaries](SECURITY.md)
+Sending requires host messaging support; browser mode uses copied context. Normal filters only save local state and do not start AI turns. Selections include DOM, text and optional part identifiers, not general AST mapping. Revision checks prevent stale edits from overwriting newer content.
+
+Read more: [Architecture and data flow](docs/ARCHITECTURE.md) · [SDK components and state](docs/SDK.md) · [Security boundaries](SECURITY.md)
 
 ## Data and upgrades
 
@@ -189,7 +169,7 @@ Source development defaults to `.canvas-data/`. Override with `CANVAS_DATA_DIR` 
 | Get started | Understand and extend | Maintain |
 |---|---|---|
 | [Usage and troubleshooting](docs/QUICKSTART.md) | [SDK contract](docs/SDK.md) | [Contributing](CONTRIBUTING.md) |
-| [Six complete examples](examples/README.md) | [Architecture](docs/ARCHITECTURE.md) | [Releasing](docs/RELEASING.md) |
+| [Development diagrams and more](examples/README.md) | [Architecture](docs/ARCHITECTURE.md) | [Releasing](docs/RELEASING.md) |
 | [Compatibility and limitations](docs/releases/1.0.0.md) | [Canvas Skill](skills/canvas/SKILL.md) | [Changelog](CHANGELOG.md) |
 
 ## Contribute

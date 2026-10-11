@@ -7,7 +7,7 @@ description: Open and automatically render local TSX/JSX canvas files, or create
 
 Create a compact, expressive canvas in the style of Cursor Canvas. Help the reader see the answer and explore its evidence at a glance. Treat the user's supplied canvas as the visual reference when one exists; preserve its composition instead of imposing a generic report template.
 
-Create one TSX module with a default React component. Import components and hooks only from `@codex-canvas/sdk`. Read [the SDK contract](../../docs/SDK.md) before writing source; do not guess props or copy Cursor-only APIs. The contract supports `useHostTheme`, compact typography, framed tables, borderless cards and header trailing content. Use [report](../../examples/report.tsx) for the default visual language, or [architecture](../../examples/architecture.tsx) / [review](../../examples/review.tsx) for their specific interactions.
+Create one TSX module with a default React component. Import components and hooks only from `@codex-canvas/sdk`. Read [the SDK contract](../../docs/SDK.md) before writing source; do not guess props or copy Cursor-only APIs. Choose a starting composition from the [example guide](../../examples/README.md) to match the content. Use the software diagrams for code relationships, and report / review examples for data and findings; do not force every canvas into a report outline.
 
 ## Compose the answer before writing JSX
 
@@ -25,6 +25,25 @@ Create one TSX module with a default React component. Import components and hook
 - Use compact details deliberately: `CardHeader trailing`, `Pill size="sm"`, `Text weight="medium"`, `Card variant="borderless"`, and `Table framed striped columnAlign`. Apply `rowTone` only when a row has a real semantic status; both alternatives in a neutral comparison need equal treatment.
 - Keep prose scannable: one thought per short paragraph, parallel comparison phrases, compact lists. Avoid numbered essay sections and repeating the same conclusion in the subtitle, callout and closing block. Put lengthy sources or methodology behind an ordinary `details` element when useful; keep important source links adjacent to claims.
 - Charts must earn their space. Use meaningful metric titles, visible units, a legend for multiple series, and a nearby source/period note. Label normalization and derived values. Do not invent ratings, measurements, prices or placeholder charts to make a canvas look richer. For qualitative comparisons, use a clear matrix or labeled trade-offs.
+
+## Software development diagrams
+
+When the question concerns code, make the relationships the main content. Read the relevant source first and choose the notation that answers the question:
+
+| Question | Starting example | Preserve these semantics |
+|---|---|---|
+| What calls this function? | [Call graph](../../examples/call-graph.tsx) | Caller → callee; name conditions, branches and omitted paths |
+| In what order do participants interact? | [Sequence](../../examples/sequence.tsx) | Lifelines, directed calls, dashed returns, explicit success / failure branches |
+| What owns or references what? | [UML classes](../../examples/class-diagram.tsx) | Separate names, attributes and methods; distinguish composition, references and inheritance |
+| Where does code execute? | [Architecture](../../examples/architecture.tsx) | Runtime / trust boundaries, labeled data flows, storage and adapters |
+| Which module depends on which? | [Dependencies](../../examples/dependencies.tsx) | Consumer → provider; separate runtime imports from erased type references |
+| What changes after an event? | [States](../../examples/state-machine.tsx) | States, event / guard labels, retries and failure paths |
+
+Use the SDK where its components fit. Native SVG is appropriate for lifelines, UML compartments and precise routing that the generic graph component does not express. Arrange by flow, ownership or execution layer rather than distributing every node into an equal card grid. Keep identifiers legible, route edges around nodes and labels, and show a compact legend. Each disconnected path needs its own arrow marker; visually check direction and endpoints.
+
+Keep the diagram dominant, supporting prose short, neutral colors theme-aware and the accent meaningful (selection or active path). A selected node can reveal source location and responsibilities; a branch control should actually change the diagram. Use keyboard-operable controls. On narrow panels, preserve readable text with bounded horizontal scrolling instead of shrinking a dense diagram to illegibility.
+
+Do not invent inheritance, calls, timings, throughput or counts. Identify source files and distinguish a source-derived view from a conceptual model. Abbreviated signatures and omitted branches should be labeled. Inspect the rendered diagram, including an alternate path or selected node, before calling it complete.
 
 ## Data and interaction
 
