@@ -18,6 +18,7 @@
     "package:release": "node scripts/package-local.mjs",
     "release:lock": "node scripts/update-release-lock.mjs",
     "release:check": "node scripts/check-release.mjs",
+    "release:archive": "node scripts/archive-release.mjs",
     "mcp": "node dist/server.mjs --stdio"
   },
   "dependencies": {

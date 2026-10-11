@@ -1,8 +1,17 @@
 name: CI
 on:
   push:
+    branches: ['**']
   pull_request:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        default: ''
+      package_artifact:
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -16,6 +25,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+          ref: ${{ inputs.ref }}
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
@@ -26,3 +36,14 @@ jobs:
       - run: pnpm package:release
       - name: Install and check the portable package
         run: node scripts/check-package.mjs
+      - name: Archive the portable package and verify SHA-256
+        id: archive
+        run: pnpm release:archive
+      - name: Retain release assets
+        if: inputs.package_artifact && matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: codex-canvas-release
+          path: ${{ steps.archive.outputs.directory }}/*
+          if-no-files-found: error
+          retention-days: 7

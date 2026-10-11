@@ -18,7 +18,7 @@ const stamp = new Date().toISOString().replace(/[:.]/g, '-');
 const releaseRoot = path.join(root, '.local', 'releases', `${pkg.version}-${local ? 'local' : 'portable'}-${stamp}`);
 const stage = path.join(releaseRoot, 'plugins', 'codex-canvas');
 await mkdir(stage, { recursive: true });
-for (const item of ['dist', 'packages', 'skills', 'examples', 'scripts', 'docs', 'plugin.json', '.codex-plugin', 'mcp.json', '.mcp.json', 'README.md', 'README.en.md', 'LICENSE', 'CHANGELOG.md', 'CONTRIBUTING.md', 'SECURITY.md', 'THIRD_PARTY_NOTICES.md', 'tsconfig.json', 'tsconfig.base.json']) {
+for (const item of ['dist', 'packages', 'skills', 'examples', 'scripts', 'docs', 'tests', '.github', 'plugin.json', '.codex-plugin', 'mcp.json', '.mcp.json', 'README.md', 'README.en.md', 'LICENSE', 'CHANGELOG.md', 'CONTRIBUTING.md', 'SECURITY.md', 'THIRD_PARTY_NOTICES.md', 'tsconfig.json', 'tsconfig.base.json']) {
   await cp(path.join(root, item), path.join(stage, item), {
     recursive: true,
     filter: name => !path.relative(root, name).split(path.sep).some(part => ['node_modules', '.canvas-data', '.local'].includes(part)),

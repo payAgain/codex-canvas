@@ -1,12 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.1.1 — 2026-10-11
 
-- Replace the main README gallery with six source-derived software development canvases: function calls, sequence, UML classes, architecture, dependencies and state transitions.
-- Redesign the architecture example around runtime boundaries and labeled flows; retain the report, chart and review examples as additional templates.
-- Add diagram-specific Canvas Skill guidance, runnable examples and bilingual documentation with actual rendering captures.
-
-## 1.1.1 — 2026-10-11 (local development)
+First downloadable GitHub Release. Includes the earlier local Canvas features described below.
 
 - Require native Codex Canvas MCP App delivery in the Canvas Skill, server initialization instructions and tool descriptions; stop native opening failures instead of launching a browser fallback.
 - Remove the HTTP listener and browser preview URL from stdio plugin processes. Native tool results explicitly declare their presentation mode.
@@ -15,6 +11,8 @@
 - Add an explicit close button and Escape action to the canvas library drawer.
 - Add permanent deletion for already-deleted canvases, with exact-title confirmation and server-side revision/deletion-state checks. Preserve external source files and legacy migration backups.
 - Fix CI's stale hardcoded UI version assertion and update the storage regression for the current default. Isolate migration checks from the real user library and verify permanent deletion in temporary data.
+- Include six software development diagrams, a runtime-boundary architecture example and bilingual showcase documentation.
+- Publish a portable marketplace ZIP, SHA-256 checksums and bilingual installation notes. Add tag-triggered releases gated on cross-platform checks, and verify archives in normal CI.
 
 ## 1.1.0 — 2026-10-11 (local development)
 

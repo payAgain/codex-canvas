@@ -12,7 +12,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-22%2B-43853d)](package.json)
 
-[示例画廊](#示例画廊) · [快速开始](#快速开始) · [安装到 Codex](#安装到-codex) · [工作原理](#工作原理) · [参与贡献](#参与贡献)
+[下载发行版](https://github.com/payAgain/codex-canvas/releases/latest) · [示例画廊](#示例画廊) · [快速开始](#快速开始) · [安装到 Codex](#安装到-codex) · [工作原理](#工作原理) · [参与贡献](#参与贡献)
 
 </div>
 
@@ -86,7 +86,19 @@ pnpm canvas open examples/architecture.tsx --browser
 
 ## 安装到 Codex
 
-需要支持插件的 **Codex 桌面端**，以及提供 `codex plugin` 命令的 **Codex CLI**。完成上方构建后：
+需要 **Node.js 22+**、支持插件的 **Codex 桌面端**，以及提供 `codex plugin` 命令的 **Codex CLI**。
+
+推荐从 [最新 Release](https://github.com/payAgain/codex-canvas/releases/latest) 下载 `codex-canvas-1.1.1-portable.zip` 和 `SHA256SUMS.txt`。同一安装包适用于 Windows、macOS 和 Linux，已包含构建后的工作台、SDK、示例与锁文件。解压到长期保留的目录，在解压根目录执行：
+
+```sh
+cd plugins/codex-canvas
+npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+cd ../..
+codex plugin marketplace add . --json
+codex plugin add codex-canvas@codex-canvas-local --json
+```
+
+如需从源码生成安装包，完成上方构建后：
 
 ```sh
 pnpm package:release
@@ -129,7 +141,7 @@ npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 
 启用插件后开始新聊天。如果当前聊天仍使用旧服务，重新加载插件，必要时重启 Codex。安装、升级和发布细节见 [发布指南](docs/RELEASING.md)。
 
-**当前状态：** 源码已在 GitHub 公开，首次 GitHub Release 尚未发布。1.0.0 已在 Windows x64 完成本地验收；跨平台 CI 检查构建与协议，Linux / macOS 原生界面仍待验证。原生面板和聊天操作取决于宿主能力，完整范围见 [验收记录](docs/releases/1.0.0.md)。
+**当前发行版：** [v1.1.1](https://github.com/payAgain/codex-canvas/releases/tag/v1.1.1)，提供可移植安装包、SHA-256 校验和安装说明。发布流程先执行 Windows、Linux、macOS 的构建、22 项回归和安装包检查。原生 UI 与聊天操作取决于宿主能力，完整范围见 [本版本说明](docs/releases/1.1.1.md) 与 [历史验收记录](docs/releases/1.0.0.md)。
 
 ## 工作原理
 

@@ -1,0 +1,87 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to publish, for example v1.1.1
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.version.outputs.sha }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: refs/tags/${{ inputs.tag || github.ref_name }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Verify tag, version and release notes
+        id: version
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, accessSync, appendFileSync } from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          import assert from 'node:assert/strict';
+          const version = JSON.parse(readFileSync('package.json', 'utf8')).version;
+          assert.match(process.env.RELEASE_TAG, /^v\d+\.\d+\.\d+$/);
+          assert.equal(process.env.RELEASE_TAG, `v${version}`);
+          accessSync(`docs/releases/${version}.md`);
+          const sha = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+          appendFileSync(process.env.GITHUB_OUTPUT, `sha=${sha}\ntag=${process.env.RELEASE_TAG}\n`);
+          NODE
+  checks:
+    needs: version
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ needs.version.outputs.sha }}
+      package_artifact: true
+  publish:
+    needs: [version, checks]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.version.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: codex-canvas-release
+          path: assets
+      - name: Publish checked version and downloadable assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          cd assets
+          sha256sum --check SHA256SUMS.txt
+          cd ..
+          node --input-type=module <<'NODE'
+          import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+          import path from 'node:path';
+          const version = JSON.parse(readFileSync('package.json', 'utf8')).version;
+          const file = `docs/releases/${version}.md`;
+          const notes = readFileSync(file, 'utf8').replace(/\]\((?!https?:|#)([^\s)]+)\)/g, (_, target) =>
+            `](https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${process.env.RELEASE_TAG}/${path.posix.normalize(path.posix.join(path.posix.dirname(file), target))})`);
+          mkdirSync('.local', { recursive: true });
+          writeFileSync('.local/release-notes.md', notes);
+          NODE
+          gh release create "$RELEASE_TAG" "assets/codex-canvas-${RELEASE_TAG#v}-portable.zip" assets/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --latest \
+            --title "Codex Canvas $RELEASE_TAG" --notes-file .local/release-notes.md

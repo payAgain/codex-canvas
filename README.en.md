@@ -12,7 +12,7 @@ Explore function calls, sequences, class relationships and system architecture i
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-22%2B-43853d)](package.json)
 
-[Gallery](#gallery) · [Quick start](#quick-start) · [Install in Codex](#install-in-codex) · [How it works](#how-it-works) · [Contribute](#contribute)
+[Download release](https://github.com/payAgain/codex-canvas/releases/latest) · [Gallery](#gallery) · [Quick start](#quick-start) · [Install in Codex](#install-in-codex) · [How it works](#how-it-works) · [Contribute](#contribute)
 
 </div>
 
@@ -86,7 +86,19 @@ The bundled [Canvas Skill](skills/canvas/SKILL.md) requires native plugin delive
 
 ## Install in Codex
 
-Requires **Codex desktop with plugin support** and a **Codex CLI** that provides `codex plugin`. After building above:
+Requires **Node.js 22+**, **Codex desktop with plugin support** and a **Codex CLI** that provides `codex plugin`.
+
+Download `codex-canvas-1.1.1-portable.zip` and `SHA256SUMS.txt` from the [latest Release](https://github.com/payAgain/codex-canvas/releases/latest). The same ZIP works on Windows, macOS and Linux and includes the built workbench, SDK, examples and dependency lockfile. Extract it into a permanent directory and run from the extracted root:
+
+```sh
+cd plugins/codex-canvas
+npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+cd ../..
+codex plugin marketplace add . --json
+codex plugin add codex-canvas@codex-canvas-local --json
+```
+
+To generate an installation package from source, build above and then run:
 
 ```sh
 pnpm package:release
@@ -129,7 +141,7 @@ Return to the extraction root containing `INSTALL.md` and `.agents/`, then run t
 
 Enable the plugin and start a new chat. If an existing chat still uses an older service, reload the plugin or restart Codex. See the [release guide](docs/RELEASING.md) for installation and upgrade details.
 
-**Current status:** The source is public on GitHub; the first GitHub Release is not published yet. 1.0.0 has passed local acceptance checks on Windows x64. Cross-platform CI checks builds and protocols; Linux / macOS native UI behavior remains unverified. Native panels and chat actions depend on host capabilities. See the [acceptance record](docs/releases/1.0.0.md) for the precise scope.
+**Current release:** [v1.1.1](https://github.com/payAgain/codex-canvas/releases/tag/v1.1.1), with a portable installation ZIP, SHA-256 checksums and installation instructions. Publication follows Windows, Linux and macOS build, 22 regression and package checks. Native UI and chat capabilities depend on the host. See the [release notes](docs/releases/1.1.1.md) and [historical acceptance record](docs/releases/1.0.0.md).
 
 ## How it works
 

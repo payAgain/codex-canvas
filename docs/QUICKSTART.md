@@ -1,6 +1,6 @@
 # 1.1.1 使用指南
 
-安装步骤见 [README](../README.md#安装到-codex)。运行需要 Node.js 22+；正式包的依赖由 `package-lock.json` 锁定。
+安装步骤见 [README](../README.md#安装到-codex)，可直接下载 [GitHub Release](https://github.com/payAgain/codex-canvas/releases/latest) 的可移植 ZIP。运行需要 Node.js 22+；正式包的依赖由 `package-lock.json` 锁定，安装时不需构建源码。
 
 ## 打开文件
 
