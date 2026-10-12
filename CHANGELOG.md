@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Broaden Canvas Skill discovery to visual explanations without an explicit plugin request. Add proactive-use criteria, examples and text-only/simple-answer boundaries, and explicitly allow implicit invocation.
+- Align plugin descriptions, MCP initialization guidance and the publish tool description with proactive visual answers. Keep native delivery and local-only filters/selections.
+
 ## 1.1.1 — 2026-10-11
 
 First downloadable GitHub Release. Includes the earlier local Canvas features described below.

@@ -72,6 +72,8 @@ The `--browser` flag explicitly starts a standalone browser example. Open its pr
 
 ### Use it in Codex
 
+The Canvas Skill guides the AI to proactively open a canvas when architecture, call flows, state changes, multi-option comparisons or data trends are clearer visually. You can ask "Explain this project's architecture" without naming Canvas. Simple answers and explicit text-only requests stay in chat. Selection depends on the host and model; the proactive-use update is available in source builds and is not yet included in the published v1.1.1 package.
+
 After installing the plugin, describe the content you want:
 
 > Open the canvas through the Codex Canvas native MCP App panel. Use canvas_open_file, canvas_open or canvas_publish. Do not open a browser or localhost preview, or use CLI open / --serve as a fallback. If native tools or the connection are unavailable, preserve the source, explain the concrete failure and stop the opening step.

@@ -1,7 +1,7 @@
 {
   "name": "codex-canvas",
   "version": "1.1.1",
-  "description": "Local interactive React canvases for Codex.",
+  "description": "Visual explanations of architecture, flows, comparisons and data through native interactive Codex canvases.",
   "skills": "./skills/",
   "mcpServers": "./.mcp.json"
 }

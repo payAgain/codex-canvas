@@ -1,9 +1,24 @@
 ---
 name: canvas
-description: Open local TSX/JSX and create or update interactive React reports, architecture diagrams and review canvases in the Codex Canvas native plugin panel. Use for opening, previewing or editing Codex Canvas artifacts; browser mode requires an explicit user request.
+description: Proactively explain architecture, call flows, dependencies, state changes, multi-option comparisons and data trends with a native Codex Canvas when a visual makes the answer clearer, even without an explicit canvas request. Also open or edit Canvas TSX/JSX. Skip simple answers and text-only requests.
 ---
 
 # Codex Canvas
+
+## When to use Canvas proactively
+
+Choose Canvas as part of answering the user's question when seeing relationships, comparing several dimensions, or exploring branches would make the answer substantially easier to understand. The user does not need to say "canvas", name the plugin, or request a diagram. When it fits, briefly state what the canvas will explain and create/open it directly; do not stop at offering to draw it or asking whether to use the plugin.
+
+- Use a diagram for architecture, function calls, dependencies, interaction sequences, ownership, or state transitions when the relationships are central to the question.
+- Use a comparison or report for multi-option trade-offs, data trends, timelines, or findings when spatial organization or meaningful interaction helps the reader decide or inspect evidence.
+- Examples that should prompt consideration without naming Canvas: "解释这个项目的架构", "这个请求经过哪些函数？", "比较这三个方案的取舍", "失败后重试会怎样？", and "Explain how these modules interact".
+- Keep single facts, short instructions, small code fixes, translations and routine progress/status replies in chat when a canvas adds little. Honor requests for plain text, a specific output format, or another tool. Do not create a visualization solely because the topic mentions code or data.
+
+Make the canvas the main visual explanation and keep the chat response to the takeaway and any essential limitations. Reuse an explicitly identified canvas for follow-up questions about the same artifact; avoid publishing a duplicate for each turn. Add controls only for useful exploration, and derive diagrams and values from available evidence.
+
+Proactive use happens within an existing user-requested turn. It does not authorize sending chat messages, starting new Agent turns, or turning filters, selections and file refresh into AI triggers. Skill selection remains a host/model decision; these instructions do not establish that every eligible question will invoke the plugin.
+
+## Native Canvas workflow
 
 In Codex, deliver canvases through this plugin's native MCP App. This is required, not a preference. Use `canvas_open_file`, `canvas_open` or `canvas_publish`; do not substitute a browser tab, localhost preview link, CLI `open`, or `--serve` process. If native opening fails or tools are unavailable, explain the concrete failure and preserve the source. Browser mode is allowed only when the user explicitly requests it.
 

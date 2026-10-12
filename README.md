@@ -72,6 +72,8 @@ pnpm canvas open examples/architecture.tsx --browser
 
 ### 在 Codex 中使用
 
+Canvas Skill 会在架构、调用流程、状态变化、多方案比较或数据趋势更适合可视化时引导 AI 主动打开画布，无需先说「使用 Canvas」。例如直接问「解释这个项目的架构」或「比较这三个方案的取舍」。简单回答和明确的纯文字要求仍在聊天中完成。实际调用取决于宿主与模型的技能选择；主动调用改动可从源码构建，尚未包含在已发布的 v1.1.1 安装包中。
+
 安装插件后，直接描述你需要的内容：
 
 > 使用 Codex Canvas 插件的原生 MCP App 面板打开画布。必须调用 canvas_open_file、canvas_open 或 canvas_publish；不要打开浏览器或 localhost 预览，不要使用 CLI open / --serve 回退。如果原生工具或连接不可用，保留源码并说明具体原因，停止打开步骤。
